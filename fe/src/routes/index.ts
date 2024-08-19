@@ -1,6 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Home } from "../pages/Home";
+// index.ts
 
+import { createFileRoute } from "@tanstack/react-router";
+import Layout from "@/pages/Layout";
+
+// Base layout route without a specific component
 export const Route = createFileRoute("/")({
-	component: Home,
+	component: Layout,
 });

@@ -1,0 +1,178 @@
+title: "Demo title"
+motd: 'Hello, this is a demo bot.  Click one of the buttons below. If you type a room name, bunny will show its program. If you type something else, it will try to find sets matching that DJ.
+'
+
+meta:
+ nowShowShallowBunnyAd: false
+ nowShowDataSourceAd: false
+ nowShowSisyDuckAd: false
+ nowTextAfterMap: "This is a demo festival"
+ nowTextWhenFinished: "Demo finished"
+ nowBotUrl: "https://t.me/festivalDemoBot"
+ aboutBigIcon:  "demo-icon.jpg"
+ aboutShowShallowBunnyIcon: true
+ aboutShowSisyDuckIcon: true
+ nowMapImage: ""
+ roomYouAreHereEmoticon: '🐰'
+ mobileAppName: "demo app"
+ prefix: "demo"
+ title: "demo festival"
+
+beg: 'Fri Aug 16 2025'
+days: 3
+modos: [ ]
+logFile: '../demo.log'
+commandsHistoryLogFile: '../demoHistory.log'
+buttons: [ 'Now', 'ALL', 'Help' ]
+input: false
+nowSkipClosed: false
+port: 8084
+
+rooms: ["⌛ Zeitmaschine", "🌾 Mühle", "🏎 Turbo Tüff", "🛵 Furore", "🛺 Rave Rikscha", "🤡 Jesterfield"  ]
+
+🌾 Mühle:
+- "0 17:00 150 0 Fid Codo" # 2024-08-08 Mühle
+- "0 19:30 120 0 Kotoe" # 2024-08-08 Mühle
+- "0 21:30 120 0 Mwaah" # 2024-08-08 Mühle
+- "0 23:30 120 0 Maka" # 2024-08-09 Mühle
+- "1 01:30 120 0 Laberg" # 2024-08-09 Mühle
+- "1 03:30 120 0 Luxon" # 2024-08-09 Mühle
+- "1 12:30 120 0 Felidae" # 2024-08-09 Mühle
+- "1 14:30 120 0 P" # 2024-08-09 Mühle
+- "1 16:30 120 0 Julius Jung" # 2024-08-09 Mühle
+- "1 18:30 120 0 Lisa Luka" # 2024-08-09 Mühle
+- "1 20:30 120 0 Damon Jee" # 2024-08-09 Mühle
+- "1 22:30 120 0 Diladi" # 2024-08-09 Mühle
+- "2 00:30 120 0 Judith Van Waterkant" # 2024-08-09 Mühle
+- "2 02:30 120 0 Isabeau Fort" # 2024-08-10 Mühle
+- "2 04:30 120 0 Taotik Sayeth Disco" # 2024-08-10 Mühle
+- "2 06:30 120 0 Onory" # 2024-08-10 Mühle
+- "2 08:30 90 0 Lazy Hazy" # 2024-08-10 Mühle
+- "2 10:00 120 0 Schwirri" # 2024-08-10 Mühle
+- "2 12:00 120 0 C2C Aka Die Claras" # 2024-08-10 Mühle
+- "2 14:00 120 0 Rosa Kante" # 2024-08-10 Mühle
+- "2 16:00 120 0 Anna Almani" # 2024-08-10 Mühle
+- "2 18:00 150 0 Melbo & Falke" # 2024-08-10 Sonntag
+- "2 20:30 120 0 Frieda Karlsson" # 2024-08-10 Sonntag
+- "2 22:30 90 0 Reyneke" # 2024-08-10 Sonntag
+- "3 00:00 120 0 Käptn 12 & Düsen Trieb" # 2024-08-11 Sonntag
+- "3 02:00 120 0 Rufus Rabatz" # 2024-08-11 Sonntag
+- "3 04:00 120 0 Lisa Von Mond" # 2024-08-11 Sonntag
+- "3 06:00 120 0 Sörös" # 2024-08-11 Sonntag
+- "3 08:00 120 0 Barti" # 2024-08-11 Sonntag
+- "3 10:00 120 0 Ella" # 2024-08-11 Sonntag
+- "3 12:00 120 0 Patte & Klatte" # 2024-08-11 Sonntag
+- "3 14:00 120 0 Marc Fuhrmann" # 2024-08-11 Sonntag
+- "3 16:00 120 0 Maria Die Ruhe" # 2024-08-11 Sonntag
+- "3 18:00 90 0 Deep Andi" # 2024-08-11 Sonntag
+- "3 19:30 150 0 Oberst & Buchner" # 2024-08-11 Sonntag
+
+⌛ Zeitmaschine:
+- "1 16:00 120 0 Marmori" # 2024-08-09 Zeitmaschine
+- "1 18:00 120 0 Anice & Daniel Schumann" # 2024-08-09 Zeitmaschine
+- "1 20:00 120 0 Sascha M & Munkler" # 2024-08-09 Zeitmaschine
+- "1 22:00 90 0 Peter Großkreutz" # 2024-08-09 Zeitmaschine
+- "1 23:30 120 0 Lotte Laut" # 2024-08-09 Zeitmaschine
+- "2 01:30 120 0 Rad.lez" # 2024-08-10 Zeitmaschine
+- "2 03:30 120 0 Yobovski" # 2024-08-10 Zeitmaschine
+- "2 05:30 120 0 Phauna" # 2024-08-10 Zeitmaschine
+- "2 15:00 150 0 Katzengold" # 2024-08-10 Sonntag
+- "2 17:30 120 0 Stan Starry & Mona Moore" # 2024-08-10 Sonntag
+- "2 19:30 120 0 Naicet & Elias Goldmund" # 2024-08-10 Sonntag
+- "2 21:30 120 0 Tom Baker" # 2024-08-10 Sonntag
+- "2 23:30 120 0 Aka Nina" # 2024-08-10 Sonntag
+- "3 01:30 120 0 Flanko" # 2024-08-11 Sonntag
+- "3 03:30 60 0 Fabian Laute" # 2024-08-11 Sonntag
+- "3 04:30 120 0 Empro" # 2024-08-11 Sonntag
+- "3 06:30 120 0 Tudse" # 2024-08-11 Sonntag
+- "3 13:30 120 0 Herr Zinnober" # 2024-08-11 Sonntag
+- "3 15:30 120 0 Intaktogene" # 2024-08-11 Sonntag
+- "3 17:30 120 0 Marco Liebreiz" # 2024-08-11 Sonntag
+- "3 19:30 90 0 Stimming" # 2024-08-11 Sonntag
+🏎 Turbo Tüff:
+- "0 22:00 150 0 Maurin" # 2024-08-08 Turbo Tüff
+- "1 00:30 120 0 Schmucko + Fate & Spinnebatz" # 2024-08-09 Turbo Tüff
+- "1 02:30 120 0 Poloralph & Lutz Vuitton" # 2024-08-09 Turbo Tüff
+- "1 04:30 120 0 Mango" # 2024-08-09 Turbo Tüff
+- "1 22:00 150 0 Sire Jonah" # 2024-08-09 Turbo Tüff
+- "2 00:30 120 0 Ben Derri" # 2024-08-10 Turbo Tüff
+- "2 02:30 120 0 Choreophila" # 2024-08-10 Turbo Tüff
+- "2 04:30 120 0 Hardschwoof 5000" # 2024-08-10 Turbo Tüff
+- "2 06:30 120 0 Felgenteufel666" # 2024-08-10 Turbo Tüff
+- "2 22:00 150 0 Hannah Hansen B2B DLZ" # 2024-08-11 Sonntag
+- "3 00:30 120 0 Zweistein" # 2024-08-12 Sonntag
+- "3 02:30 120 0 Melanchromie" # 2024-08-12 Sonntag
+- "3 04:30 120 0 TNT" # 2024-08-12 Sonntag
+- "3 06:30 120 0 Spicy Swelts" # 2024-08-12 Sonntag
+
+🛵 Furore:
+- "0 18:30 120 0 Langschlenderer" # 2024-08-08 Furore
+- "0 20:30 120 0 Na Glaaaa... Das Songquiz" # 2024-08-08 Furore
+- "0 22:30 60 0 Kaos" # 2024-08-08 Furore
+- "1 00:00 60 0 Ende September" # 2024-08-09 Furore
+- "1 14:00 180 0 Queere Märchenstunde + Gräfin Zobel Set" # 2024-08-09 Furore
+- "1 17:00 120 0 DJ Quien" # 2024-08-09 Furore
+- "1 19:00 60 0 Organi ???" # 2024-08-09 Furore
+- "1 20:30 120 0 Chaos Caraoke Club" # 2024-08-09 Furore
+- "1 23:00 60 0 Satisire" # 2024-08-09 Furore
+- "2 00:00 90 0 Gest" # 2024-08-10 Furore
+- "2 01:30 150 0 Re:Set" # 2024-08-10 Furore
+- "2 13:30 30 0 ???" # 2024-08-10 Furore
+- "2 14:00 150 0 Bingo Brudis" # 2024-08-10 Furore
+- "2 17:30 60 0 Rabayah" # 2024-08-10 Furore
+- "2 18:30 60 0 Mike Martin" # 2024-08-10 Furore
+- "2 20:00 90 0 The Razzones" # 2024-08-10 Furore
+- "2 21:30 90 0 Kite" # 2024-08-10 Furore
+- "2 23:00 90 0 Ugly-Dub" # 2024-08-10 Furore
+- "3 00:30 150 0 Matryoschka" # 2024-08-10 Furore
+- "3 03:00 120 0 Boba Ved" # 2024-08-11 Furore
+- "3 14:00 120 0 Hot Wlan (Calm)" # 2024-08-11 Room Not Specified
+- "3 16:30 60 0 The Dropdown Menu" # 2024-08-11 Room Not Specified
+- "3 17:30 90 0 Surprise" # 2024-08-11 Room Not Specified
+- "3 19:30 60 0 Rimojeki" # 2024-08-11 Room Not Specified
+
+🤡 Jesterfield:
+- "1 16:00 60 0 Malaika" # 2024-08-09 Jesterfield
+- "1 17:30 60 0 Jawatnu" # 2024-08-09 Jesterfield
+- "1 19:00 60 0 Sanes Medicine" # 2024-08-09 Jesterfield
+- "1 20:30 60 0 Mosk P" # 2024-08-09 Jesterfield
+- "1 22:00 60 0 Kristina Quarter" # 2024-08-09 Jesterfield
+- "1 23:00 180 0 Jam Session" # 2024-08-09 Jesterfield
+- "2 13:00 60 0 Atmo Sounds - Sera Lee" # 2024-08-10 Jesterfield
+- "2 14:00 90 0 Ein Feld Voller Narren" # 2024-08-10 Jesterfield
+- "2 15:30 30 0 Jack Jesterfield" # 2024-08-10 Jesterfield
+- "2 16:00 60 0 Gouche Flustir" # 2024-08-10 Jesterfield
+- "2 17:00 60 0 Theo Gillian & Sera Lee" # 2024-08-10 Jesterfield
+- "2 18:00 90 0 Bunte Tute" # 2024-08-10 Jesterfield
+- "2 20:00 30 0 Benjamin ???" # 2024-08-10 Jesterfield
+- "2 21:00 60 0 Ora Blu" # 2024-08-10 Jesterfield
+- "2 22:30 60 0 Sabraabb" # 2024-08-10 Jesterfield
+- "3 00:30 180 0 Jam Session" # 2024-08-10 Jesterfield
+- "3 14:00 90 0 Ein Feld Voller Narren" # 2024-08-11 Jesterfield
+- "3 15:30 60 0 ???" # 2024-08-11 Jesterfield
+- "3 17:00 300 0 Jamboree" # 2024-08-11 Jesterfield
+
+
+🛺 Rave Rikscha: 
+- "0 20:00 120 0 Simon Simono" # 2024-08-08 Room Not Specified
+- "0 22:00 120 0 Secret" # 2024-08-08 Room Not Specified
+- "1 11:00 120 0 Garnele" # 2024-08-09 Room Not Specified
+- "1 13:00 150 0 Zimt & Zucker" # 2024-08-09 Room Not Specified
+- "1 15:30 150 0 Lea Chuga" # 2024-08-09 Room Not Specified
+- "1 18:00 120 0 Wiebke" # 2024-08-09 Room Not Specified
+- "1 20:00 120 0 Pony-Barker" # 2024-08-09 Room Not Specified
+- "2 08:00 120 0 Kosh" # 2024-08-10 Room Not Specified
+- "2 10:00 120 0 Phillinger" # 2024-08-10 Room Not Specified
+- "2 12:00 120 0 Tones Mahones" # 2024-08-10 Room Not Specified
+- "2 14:00 120 0 Francesca B2B Maria Theresia Von Eberg" # 2024-08-10 Room Not Specified
+- "2 16:00 120 0 Tamtoomi" # 2024-08-10 Room Not Specified
+- "2 18:00 120 0 Okrim" # 2024-08-10 Room Not Specified
+- "2 20:00 120 0 Frequency w/ Haana Peony" # 2024-08-10 Room Not Specified
+- "3 08:00 150 0 Mella Mara" # 2024-08-11 Room Not Specified
+- "3 10:30 150 0 Anja Anique" # 2024-08-11 Room Not Specified
+- "3 13:00 120 0 Baerbel B2B Trauma Mia" # 2024-08-11 Room Not Specified
+- "3 15:00 120 0 Lisa Filou" # 2024-08-11 Room Not Specified
+- "3 17:00 120 0 Vacant" # 2024-08-11 Room Not Specified
+
+
+

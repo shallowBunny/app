@@ -1,7 +1,6 @@
 import React from "react";
-import { isProduction } from "../../../common/utils";
 
-export const TanStackTableDevelopmentTools = isProduction
+export const TanStackTableDevelopmentTools = import.meta.env.PROD
 	? (): null => null
 	: React.lazy(() =>
 			import("@tanstack/react-table-devtools").then((result) => ({

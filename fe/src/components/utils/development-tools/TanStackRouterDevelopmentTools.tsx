@@ -1,7 +1,6 @@
 import React from "react";
-import { isProduction } from "../../../common/utils";
 
-export const TanStackRouterDevelopmentTools = isProduction
+export const TanStackRouterDevelopmentTools = import.meta.env.PROD
 	? (): null => null
 	: React.lazy(() =>
 			import("@tanstack/router-devtools").then((result) => ({

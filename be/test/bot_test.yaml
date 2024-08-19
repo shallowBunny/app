@@ -1,0 +1,32 @@
+motd: "xxx"
+beg: "Thu Aug 15 2024"
+telegramToken: "xxx"
+days: 4
+admins: [-123]
+modos: [-123]
+logFile: "/dev/null"
+input: true
+meta:
+  nowShowShallowBunnyAd: false
+  nowShowDataSourceAd: false
+  nowShowSisyDuckAd: false
+  nowTextAfterMap: ""
+  nowTextWhenFinished: ""
+  nowBotUrl: ""
+  aboutBigIcon: ""
+  aboutShowShallowBunnyIcon: false
+  aboutShowSisyDuckIcon: true
+  nowMapImage: ""
+  roomYouAreHereEmoticon: "🐰"
+  mobileAppName: ""
+  prefix: ""
+  title: ""
+rooms: ["🍵", "🔨"]
+🍵:
+  - "1 01:00 60 0 A"
+  - "1 02:00 60 0 B"
+  - "1 03:00 60 0 C"
+  - "1 04:00 60 0 D"
+🔨:
+  - "1 03:00 180 0 E"
+  - "1 06:00 180 0 F"
