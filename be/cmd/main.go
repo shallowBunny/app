@@ -111,7 +111,7 @@ func main() {
 	config := config.New(configFile)
 
 	// Initialize logging and get the file handles
-	logFile := initLogging(configFile)
+	logFile := initLogging(config.LogFile)
 	if logFile != nil {
 		defer logFile.Close() // Ensure files are closed when main exits
 	}

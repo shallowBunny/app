@@ -244,7 +244,7 @@ func (t Telegram) Listen() {
 					// Note that panics are a bad way to handle errors. Telegram can
 					// have service outages or network errors, you should retry sending
 					// messages or more gracefully handle failures.
-					log.Error().Msg(err.Error())
+					log.Error().Msg(fmt.Sprintf("%v %v", err.Error(), msg))
 				}
 			}
 		}

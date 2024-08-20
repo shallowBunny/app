@@ -347,17 +347,6 @@ func (b Bot) SendModosMessage(input string) {
 	}
 }
 
-func (b Bot) sendWelcomeMessage(userId int64, msg string, html bool) {
-	if b.channel != nil {
-		b.channel <- Message{
-			UserID:  userId,
-			Text:    msg,
-			Buttons: nil,
-			Html:    html,
-		}
-	}
-}
-
 func (b Bot) sendMessage(userId int64, msg string) {
 	if b.channel != nil {
 		buttons := b.GetButtonsForUser(userId)
@@ -793,16 +782,18 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 
 	}
 
-	if answer == "" || answer == "\n" {
-		answer = "empty"
+	if answer != "" && answer != "\n" {
+		messages = append(messages, Message{
+			Text:    answer,
+			Buttons: buttons,
+			UserID:  chatId,
+			Html:    html,
+		})
+	} else {
+		log.Warn().Msg("skipped empty message")
 	}
 
-	return splitMessages(append(messages, Message{
-		Text:    answer,
-		Buttons: buttons,
-		UserID:  chatId,
-		Html:    html,
-	}))
+	return splitMessages(messages)
 }
 
 func (b Bot) GetButtonsForUser(chatId int64) []string {
