@@ -389,16 +389,6 @@ func (b *Bot) SendEvents() {
 			log.Info().Msg(fmt.Sprintf("sending %d events", len(users)))
 			for _, v := range users {
 				msgForUser := eventsText
-				/*
-								_, ok := notifiedUsers[v]
-								if !ok {
-									notifiedUsers[v] = true
-									if v > 0 {
-										msgForUser += `(type "s" to stop dj change notifications)
-					`
-									}
-								}
-				*/
 				if v > 0 { // SKIP pour les groups
 					log.Debug().Msg(fmt.Sprintf("sending event for %v", v))
 					b.sendMessage(v, msgForUser)
@@ -865,8 +855,8 @@ func (b *Bot) GroupChange(chatId int64, userString, group string) {
 }
 
 type Response struct {
-	Sets []lineUp.Set `json:"sets"`
 	Meta config.Meta  `json:"meta"`
+	Sets []lineUp.Set `json:"sets"`
 }
 
 // Define the Manifest struct

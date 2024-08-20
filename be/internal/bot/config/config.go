@@ -14,20 +14,21 @@ import (
 )
 
 type Meta struct {
-	Prefix                    string `json:"prefix"`
-	Title                     string `json:"title"`
-	MobileAppName             string `json:"mobileAppName"`
 	AboutBigIcon              string `json:"aboutBigIcon"`
 	AboutShowShallowBunnyIcon bool   `json:"aboutShowShallowBunnyIcon"`
 	AboutShowSisyDuckIcon     bool   `json:"aboutShowSisyDuckIcon"`
-	NowShowShallowBunnyAd     bool   `json:"nowShowShallowBunnyAd"`
-	NowShowSisyDuckAd         bool   `json:"nowShowSisyDuckAd"`
-	NowShowDataSourceAd       bool   `json:"nowShowDataSourceAd"`
-	NowTextAfterMap           string `json:"nowTextAfterMap"`
-	NowTextWhenFinished       string `json:"nowTextWhenFinished"`
 	NowBotUrl                 string `json:"nowBotUrl"`
 	NowMapImage               string `json:"nowMapImage"`
+	NowShowDataSourceAd       bool   `json:"nowShowDataSourceAd"`
+	NowShowShallowBunnyAd     bool   `json:"nowShowShallowBunnyAd"`
+	NowShowSisyDuckAd         bool   `json:"nowShowSisyDuckAd"`
+	NowShowPleaseSendData     bool   `json:"nowShowPleaseSendData"`
+	NowTextAfterMap           string `json:"nowTextAfterMap"`
+	NowTextWhenFinished       string `json:"nowTextWhenFinished"`
+	MobileAppName             string `json:"mobileAppName"`
+	Prefix                    string `json:"prefix"`
 	RoomYouAreHereEmoticon    string `json:"roomYouAreHereEmoticon"`
+	Title                     string `json:"title"`
 }
 
 type Config struct {
@@ -94,6 +95,7 @@ func New(fileName string) *Config {
 	c.Meta.NowShowShallowBunnyAd = v.GetBool("meta.nowShowShallowBunnyAd")
 	c.Meta.NowShowDataSourceAd = v.GetBool("meta.nowShowDataSourceAd")
 	c.Meta.NowShowSisyDuckAd = v.GetBool("meta.nowShowSisyDuckAd")
+	c.Meta.NowShowPleaseSendData = v.GetBool("meta.nowShowPleaseSendData")
 	c.Meta.NowTextAfterMap = v.GetString("meta.nowTextAfterMap")
 	c.Meta.NowTextWhenFinished = v.GetString("meta.nowTextWhenFinished")
 	c.Meta.NowBotUrl = v.GetString("meta.nowBotUrl")

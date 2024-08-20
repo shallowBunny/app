@@ -8,25 +8,26 @@ export interface Set {
 }
 
 export interface Meta {
-	nowShowShallowBunnyAd: boolean;
-	nowShowDataSourceAd: boolean;
-	nowShowSisyDuckAd: boolean;
-	nowTextAfterMap: string;
-	nowTextWhenFinished: string;
-	nowBotUrl: string;
 	aboutBigIcon: string;
 	aboutShowShallowBunnyIcon: boolean;
 	aboutShowSisyDuckIcon: boolean;
+	nowBotUrl: string;
 	nowMapImage: string;
-	roomYouAreHereEmoticon: string;
+	nowShowDataSourceAd: boolean;
+	nowShowShallowBunnyAd: boolean;
+	nowShowSisyDuckAd: boolean;
+	nowShowPleaseSendData: boolean;
+	nowTextAfterMap: string;
+	nowTextWhenFinished: string;
 	mobileAppName: string;
 	prefix: string;
+	roomYouAreHereEmoticon: string;
 	title: string;
 }
 
 export interface Data {
-	sets: Set[];
 	meta: Meta;
+	sets: Set[];
 }
 export interface RoomSituation {
 	room: string;

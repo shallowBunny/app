@@ -3,19 +3,20 @@ motd: 'Hello, this is a demo bot.  Click one of the buttons below. If you type a
 '
 
 meta:
- nowShowShallowBunnyAd: false
- nowShowDataSourceAd: false
- nowShowSisyDuckAd: false
- nowTextAfterMap: "This is a demo festival"
- nowTextWhenFinished: "Demo finished"
- nowBotUrl: "https://t.me/festivalDemoBot"
  aboutBigIcon:  "demo-icon.jpg"
  aboutShowShallowBunnyIcon: true
  aboutShowSisyDuckIcon: true
+ nowBotUrl: "https://t.me/festivalDemoBot"
  nowMapImage: ""
- roomYouAreHereEmoticon: '🐰'
+ nowShowDataSourceAd: false
+ nowShowShallowBunnyAd: false
+ nowShowSisyDuckAd: false
+ nowShowPleaseSendData: false
+ nowTextAfterMap: "This is a demo festival"
+ nowTextWhenFinished: "Demo finished"
  mobileAppName: "demo app"
  prefix: "demo"
+ roomYouAreHereEmoticon: '🐰'
  title: "demo festival"
 
 beg: 'Fri Aug 16 2025'

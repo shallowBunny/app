@@ -75,6 +75,21 @@ export const Now: FunctionComponent<NowProps> = ({
 							/>
 						</li>
 					)}
+
+					{data.meta.nowShowPleaseSendData && (
+						<li key="infowpa" className="mb-4">
+							Lineup data for this event is not available yet, when you have
+							access to it, please share a picture in this{" "}
+							<a
+								href="https://t.me/shallowBunny"
+								target="_blank"
+								className="underline cursor-pointer"
+							>
+								Telegram group
+							</a>
+						</li>
+					)}
+
 					{!allSetsInPast && data.meta.nowTextAfterMap && (
 						<li key="next-message-little" className="mb-4">
 							{data.meta.nowTextAfterMap}
