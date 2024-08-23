@@ -14,13 +14,15 @@ import {
 import BunnyIcon from "@/assets/icon-bunny.png";
 import DuckIcon from "@/assets/icon-duck.png";
 import TelegramIcon from "@/assets/icon-telegram.png";
+import TelegramBotIcon from "@/assets/icon-telegram-bot.png";
+
 import GithubIcon from "@/assets/icon-github.png";
 
 import { Now } from "@/components/ui/Now";
 import { useQuery } from "@tanstack/react-query";
 import { queryOptions } from "../lib/queryConfig";
 import { Data } from "../lib/types";
-import { allSetsInPastAndFinishedMoreThan3HoursAgo } from "../lib/setUtils"; // Import the function
+import { allSetsInPastAndFinishedMoreThanOneHourAgo } from "../lib/setUtils"; // Import the function
 import useCurrentMinute from "../hooks/useCurrentMinute"; // Import the custom hook
 import { loadImageAsync } from "../lib/loadImage";
 
@@ -73,7 +75,13 @@ const Layout: React.FC = () => {
 
 	useEffect(() => {
 		// Preload Drawer content images
-		const preloadImages = [TelegramIcon, BunnyIcon, DuckIcon, GithubIcon];
+		const preloadImages = [
+			TelegramIcon,
+			TelegramBotIcon,
+			BunnyIcon,
+			DuckIcon,
+			GithubIcon,
+		];
 		const preloadImagePromises = preloadImages.map((src) => {
 			const img = new Image();
 			img.src = src;
@@ -97,7 +105,7 @@ const Layout: React.FC = () => {
 			setAppleMobileWebAppTitle(mobileWebAppTitle);
 
 			// Check if all sets are in the past and the last one finished more than 3 hours ago
-			const allSetsPast = allSetsInPastAndFinishedMoreThan3HoursAgo(data.sets);
+			const allSetsPast = allSetsInPastAndFinishedMoreThanOneHourAgo(data.sets);
 			if (!allSetsPast) {
 				const pageTitle = data.meta.title || "Lineup app";
 				setPageTitle(pageTitle);
@@ -286,6 +294,19 @@ const Layout: React.FC = () => {
 														className="relative max-w-[64px] block overflow-hidden"
 													>
 														<img className="w-full" src={DuckIcon} alt="duck" />
+													</a>
+												)}
+												{data.meta.nowBotUrl && (
+													<a
+														href={data.meta.nowBotUrl}
+														target="_blank"
+														className="relative max-w-[64px] block overflow-hidden"
+													>
+														<img
+															className="w-full"
+															src={TelegramBotIcon}
+															alt="TelegramBot"
+														/>
 													</a>
 												)}
 											</div>

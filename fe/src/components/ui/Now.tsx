@@ -136,19 +136,6 @@ export const Now: FunctionComponent<NowProps> = ({
 							🌲
 						</li>
 					)}
-					{data.meta.nowBotUrl && (
-						<li key="unique-key-bot-url" className="mb-4">
-							🤖🤖 There's also a{" "}
-							<a
-								href={data.meta.nowBotUrl}
-								target="_blank"
-								className="underline cursor-pointer"
-							>
-								Telegram bot
-							</a>{" "}
-							🤖🤖
-						</li>
-					)}
 				</div>
 			</ul>
 		</div>
