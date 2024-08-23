@@ -34,26 +34,28 @@ func printTime(t time.Time) string {
 	return t.Format("15:04")
 }
 
+func printTimeWithDay(t time.Time) string {
+	return t.Format("Mon 15:04")
+}
+
 type LineUp struct {
-	Sets      []Set
-	events    []Event
-	StartTime time.Time
-	Inputs    inputs.Inputs
-	Rooms     []string
-	//	Days          []string // len = 7
-	Changes                   []inputs.InputCommandResultSet
-	Input                     bool
-	NowSkipClosed             bool
-	PrintThisIsLastWeekLineup bool
-	//Commits   map[uint64][]inputs.InputCommandResultSet
+	Sets             []Set
+	events           []Event
+	StartTime        time.Time
+	Inputs           inputs.Inputs
+	Rooms            []string
+	Changes          []inputs.InputCommandResultSet
+	Input            bool
+	NowSkipClosed    bool
+	OldLineupMessage string
 }
 
 const (
 	UnknownDJ           = "?"
 	closed              = "🚫 closed"
 	openedFloor         = "✅"
-	noData              = "⚠️ No data available yet, you can submit sets using the /input command ⚠️"
-	missingData         = "\n\n⚠️ Some data is missing, you can submit sets using the /input command ⚠️"
+	noData              = "⚠️ No data available yet ⚠️"
+	missingData         = "\n\n⚠️ Some data is missing ⚠️"
 	here                = " <- you are here"
 	minSizeDJSearch     = 2
 	minSizeDJSearchText = "Enter more than 2 characters for searching a DJ.\n"
@@ -62,39 +64,39 @@ const (
 
 func (l LineUp) DuplicateLineUp() *LineUp {
 	new := &LineUp{
-		Sets:      l.Sets,
-		events:    l.events,
-		StartTime: l.StartTime,
-		Inputs:    l.Inputs,
-		Rooms:     l.Rooms,
-		//Days:          l.Days,
-		Changes:       l.Changes,
-		Input:         l.Input,
-		NowSkipClosed: l.NowSkipClosed,
+		Sets:             l.Sets,
+		events:           l.events,
+		StartTime:        l.StartTime,
+		Inputs:           l.Inputs,
+		Rooms:            l.Rooms,
+		Changes:          l.Changes,
+		Input:            l.Input,
+		NowSkipClosed:    l.NowSkipClosed,
+		OldLineupMessage: l.OldLineupMessage,
 	}
 	return new
 }
 
-func New(startTime time.Time, nbDays int, input bool, printThisIsLastWeekLineup bool, NowSkipClosed bool,
+func New(startTime time.Time, nbDaysForInput int, input bool, oldLineupMessage string, NowSkipClosed bool,
 	defaultButtons []string, rooms []string, roomSchedulesShedules map[string][]string) *LineUp {
 
 	days := []string{}
 
-	for i := 0; i < nbDays; i++ {
+	for i := 0; i < nbDaysForInput; i++ {
 		d := startTime.Add(time.Duration(24*i) * time.Hour).Format("Mon")
 		days = append(days, d)
 	}
 
 	lineUp := &LineUp{
-		Sets:                      []Set{},
-		events:                    []Event{},
-		Inputs:                    inputs.New(days, rooms),
-		StartTime:                 startTime,
-		Rooms:                     rooms,
-		Changes:                   []inputs.InputCommandResultSet{},
-		Input:                     input,
-		PrintThisIsLastWeekLineup: printThisIsLastWeekLineup,
-		NowSkipClosed:             NowSkipClosed,
+		Sets:             []Set{},
+		events:           []Event{},
+		Inputs:           inputs.New(days, rooms),
+		StartTime:        startTime,
+		Rooms:            rooms,
+		Changes:          []inputs.InputCommandResultSet{},
+		Input:            input,
+		OldLineupMessage: oldLineupMessage,
+		NowSkipClosed:    NowSkipClosed,
 	}
 
 	for _, room := range rooms {
@@ -125,8 +127,6 @@ func New(startTime time.Time, nbDays int, input bool, printThisIsLastWeekLineup 
 			if msg != "" {
 				log.Error().Msg(msg)
 			}
-			//	log.Trace().Msg(fmt.Sprintf("day=%d time=%d:%d duration=%d kind=%d dj=%s ", day, hour, minute, duration, kind, djName))
-
 		}
 	}
 	return lineUp
@@ -413,13 +413,13 @@ func sameDay(date1, date2 time.Time) bool {
 		date1.Day() == date2.Day()
 }
 
-func printRoom(sets []Set, oldLineup bool, currentTime time.Time, youAre string, filterNomSalle string) string {
+func printRoom(sets []Set, input bool, oldData bool, oldLineupMessage string, currentTime time.Time, youAre string, filterNomSalle string) string {
 	var res string
 	var closingTime time.Time
 
-	printedYouAreHere := oldLineup
+	printedYouAreHere := oldData
 
-	log.Trace().Msg(fmt.Sprintf("printRoom: oldLineup:%v currentTime:%v", oldLineup, currentTime))
+	log.Trace().Msg(fmt.Sprintf("printRoom: oldLineup:%v currentTime:%v", oldLineupMessage, currentTime))
 
 	sort.Slice(sets, func(i, j int) bool {
 		return sets[i].Start.Before(sets[j].Start)
@@ -437,7 +437,6 @@ func printRoom(sets []Set, oldLineup bool, currentTime time.Time, youAre string,
 		}
 	}
 	if !foundData {
-		log.Warn().Msg(fmt.Sprintf("printRoom: returning %s", noData))
 		return noData
 	}
 
@@ -487,9 +486,7 @@ func printRoom(sets []Set, oldLineup bool, currentTime time.Time, youAre string,
 		res += printTime(closingTime) + " closed\n"
 	}
 
-	if oldLineup {
-		res += "\n\n⚠️ This is last week's lineup! ⚠️\n"
-	}
+	res += oldLineupMessage
 
 	return res
 }
@@ -511,7 +508,7 @@ func (l LineUp) PrintForMerge(filterNomSalle string) string {
 		return s[i].Start.Before(s[j].Start)
 	})
 
-	res += filterNomSalle + ":\n"
+	res += "\n" + filterNomSalle + ":\n\n"
 
 	for _, v := range s {
 		res += v.Start.Format("Mon") + " " + printTime(v.Start) + " to " + printTime(v.End) + " " + v.Dj
@@ -527,12 +524,13 @@ func (l LineUp) PrintForMerge(filterNomSalle string) string {
 func (l LineUp) Print(youAreHere string, filter int, filterNomSalle string) string {
 	current := time.Now()
 	s := []Set{}
-
-	var oldLineup = l.PrintThisIsLastWeekLineup
+	var oldData bool = true
+	var oldLineupMessage = l.OldLineupMessage
 	for _, v := range l.Sets {
 		//	if v.End.After(current) {
 		if v.End.After(current) {
-			oldLineup = false
+			oldLineupMessage = ""
+			oldData = false
 		}
 		if filter != -1 {
 			if v.kind != filter {
@@ -558,7 +556,7 @@ func (l LineUp) Print(youAreHere string, filter int, filterNomSalle string) stri
 		res += noData
 		return res
 	}
-	return res + printRoom(s, oldLineup, current, youAreHere, filterNomSalle)
+	return res + printRoom(s, l.Input, oldData, oldLineupMessage, current, youAreHere, filterNomSalle)
 }
 
 func (l LineUp) getDayNumber(t time.Time) int {
@@ -644,7 +642,7 @@ func (l LineUp) Hole() string {
 			lastClosing = time.Time{}
 		}
 		if !lastClosing.IsZero() && v.Start != lastClosing {
-			res += room + " hole: " + printTime(lastClosing) + " to " + printTime(v.Start) + " (" + lastDJ + " -> " + v.Dj + ")\n"
+			res += room + " gap: " + printTimeWithDay(lastClosing) + " to " + printTimeWithDay(v.Start) + " (" + lastDJ + " -> " + v.Dj + ")\n"
 		}
 		if !lastClosing.IsZero() && v.Start.Before(lastClosing) {
 			res += "# wrong data? " + lastClosing.String() + " to " + v.Start.String() + "\n"

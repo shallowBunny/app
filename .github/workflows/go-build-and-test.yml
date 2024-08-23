@@ -1,0 +1,37 @@
+name: Go Build and Test
+
+on:
+  push:
+    branches:
+      - "**" # Trigger the workflow on push to any branch
+  pull_request: # Optional: Also trigger on pull requests
+    branches:
+      - "**" # Trigger the workflow on pull requests to any branch
+  workflow_dispatch: # Allows you to manually trigger the workflow
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the current repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Go environment
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21" # Specify the Go version you want to use
+
+      # Step 3: Build the Go project
+      - name: Build the project
+        run: |
+          cd be  # Navigate to the be directory
+          make build  # Run the build command
+
+      # Step 4: Run tests
+      - name: Run tests
+        run: |
+          cd be  # Navigate to the be directory
+          make test  # Run the test command

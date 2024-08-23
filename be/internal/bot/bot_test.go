@@ -24,7 +24,11 @@ const (
 )
 
 func TestSerialisation(t *testing.T) {
-	config := config.New("../../test/bot_test.yaml")
+	config, err := config.New("../../test/bot_test.yaml", false)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
 	tt := time.Now()
 	log.Debug().Msg("TestSerialisation")
 
@@ -61,7 +65,7 @@ func TestSerialisation(t *testing.T) {
 
 	log.Debug().Msg("TestSerialisation 3")
 
-	err := dao.DeleteBot(config.BeginningSchedule)
+	err = dao.DeleteBot(config.BeginningSchedule)
 	if err != nil {
 		log.Error().Msg(fmt.Sprintf("<%v>", err.Error()))
 	}
@@ -70,7 +74,10 @@ func TestSerialisation(t *testing.T) {
 
 func TestEvents(t *testing.T) {
 
-	config := config.New("../../test/bot_test.yaml")
+	config, err := config.New("../../test/bot_test.yaml", false)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
 
 	tt := time.Now()
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
@@ -129,7 +136,11 @@ func TestInputMergeAndRebase(t *testing.T) {
 	t.Log("Test started")
 
 	// create config object
-	config := config.New("../../test/bot_test.yaml")
+	config, err := config.New("../../test/bot_test.yaml", false)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
 	tt := time.Now()
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
 	config.BeginningSchedule = currentTime
@@ -257,7 +268,11 @@ func TestInputMergeAndRebase(t *testing.T) {
 func TestInputMultipleMergeAndRebase(t *testing.T) {
 
 	// create config object
-	config := config.New("../../test/bot_test.yaml")
+	config, err := config.New("../../test/bot_test.yaml", false)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
 	tt := time.Now()
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
 	config.BeginningSchedule = currentTime

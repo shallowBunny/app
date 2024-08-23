@@ -42,7 +42,7 @@ func TestLineUpInput(t *testing.T) {
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
 	startTime := currentTime
 
-	lu := New(startTime, 3, true, true, false, nil, rooms, roomSchedule)
+	lu := New(startTime, 3, true, "", false, nil, rooms, roomSchedule)
 
 	got := lu.Dump()
 	want := `roomA:
@@ -130,7 +130,7 @@ func TestFindRoom(t *testing.T) {
 		roomA: {"0 23:00 120 0 MADmoiselle", "0 23:00 120 0 Mad max"},
 	}
 	startTime := time.Now().Add(time.Hour)
-	lu := New(startTime, 3, true, true, false, nil, rooms, roomSchedule2)
+	lu := New(startTime, 3, true, "", false, nil, rooms, roomSchedule2)
 
 	inputTest := []test{
 		{input: "Tanzwuste", want: roomTanz},
@@ -151,7 +151,7 @@ func TestFindDJ(t *testing.T) {
 		roomA: {"3 18:00 60 0 Robyn Schulkowsky & Gebrüder Teichmann"},
 	}
 	startTime := time.Now().Add(time.Hour)
-	lu := New(startTime, 3, true, true, false, nil, rooms, roomSchedule)
+	lu := New(startTime, 3, true, "", false, nil, rooms, roomSchedule)
 
 	day := time.Now().Add(time.Hour * 24 * 3).Format("Monday")
 

@@ -192,14 +192,14 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 			gotBotFromDB = false
 		}
 	} else {
-		log.Warn().Msg("input=false using config")
+		log.Debug().Msg("input=false using config")
 		gotBotFromDB = false
 	}
 
 	if !gotBotFromDB {
 		bot = &Bot{
 			UsersLineUps: make(map[int64]*lineUp.LineUp),
-			RootLineUp:   lineUp.New(config.BeginningSchedule, config.Days, config.Input, config.PrintThisIsLastWeekLineup, config.NowSkipClosed, config.Buttons, config.Rooms, config.Shedules),
+			RootLineUp:   lineUp.New(config.BeginningSchedule, config.NbDaysForInput, config.Input, config.OldLineupMessage, config.NowSkipClosed, config.Buttons, config.Rooms, config.Shedules),
 		}
 		gotBotFromDB = false
 		log.Info().Msg("loading bot from config")
@@ -461,6 +461,17 @@ func (b Bot) GetLineUpForUser(chatId int64) *lineUp.LineUp {
 		return l
 	}
 	return b.RootLineUp
+}
+
+func (b Bot) PrintLinupForCheckConfig() string {
+	res := "\n\nLineup in each rooms:\n"
+	for _, v := range b.RootLineUp.Rooms {
+		res += b.RootLineUp.PrintForMerge(v)
+	}
+	res += "\nGAPS:\n\n"
+
+	res += b.RootLineUp.Hole()
+	return res
 }
 
 func compareLineUps(a, b *lineUp.LineUp) string {
@@ -807,6 +818,10 @@ func (b Bot) GetButtonsForUser(chatId int64) []string {
 		if b.magicRoomButton {
 			if v == helpCommand {
 				lastShown := b.users.GetLastShownRoom(chatId)
+
+				if lastShown >= len(b.roomsEmoticons) {
+					lastShown = 0
+				}
 				buttons = append(buttons, b.roomsEmoticons[lastShown])
 			}
 		}

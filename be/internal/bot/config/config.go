@@ -2,10 +2,9 @@ package config
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/araddon/dateparse"
@@ -32,66 +31,66 @@ type Meta struct {
 }
 
 type Config struct {
-	Meta                      Meta
-	BeginningSchedule         time.Time
-	Rooms                     []string
-	Shedules                  map[string][]string
-	Motd                      string
-	Days                      int
-	Buttons                   []string
-	TelegramToken             string
-	Input                     bool
-	LogFile                   string
-	CommandsHistoryLogFile    string
-	Admins                    []int
-	Modos                     []int
-	NowSkipClosed             bool
-	Port                      int
-	PrintThisIsLastWeekLineup bool
+	Meta                   Meta
+	BeginningSchedule      time.Time
+	Rooms                  []string
+	Shedules               map[string][]string
+	Motd                   string
+	NbDaysForInput         int
+	Buttons                []string
+	TelegramToken          string
+	Input                  bool
+	LogFile                string
+	CommandsHistoryLogFile string
+	Admins                 []int
+	Modos                  []int
+	NowSkipClosed          bool
+	Port                   int
+	OldLineupMessage       string
 }
 
-// ExtractFilename extracts the filename from a given path without the leading path and extension
-func extractFilename(fullPath string) string {
-	// Get the base name of the file
-	base := filepath.Base(fullPath)
+func New(fileName string, isConfigCheck bool) (*Config, error) {
 
-	// Remove the extension
-	ext := filepath.Ext(base)
-	filename := strings.TrimSuffix(base, ext)
-
-	return filename
-}
-
-func New(fileName string) *Config {
+	errorString := ""
 
 	c := Config{
 		Shedules: make(map[string][]string),
 	}
 
 	data, err := os.ReadFile(fileName)
-
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	v := viper.New()
 	v.SetConfigType("yaml")
 	err = v.ReadConfig(bytes.NewBuffer(data))
-
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	c.TelegramToken = v.GetString("telegramToken")
-
+	if isConfigCheck && v.IsSet("telegramToken") {
+		errorString += "ConfigCheck: telegramToken not allowed\n"
+	}
 	c.Buttons = v.GetStringSlice("buttons")
-
 	c.Rooms = v.GetStringSlice("rooms")
 
+	if len(c.Rooms) == 0 {
+		errorString += "missing rooms\n"
+	}
 	c.Admins = v.GetIntSlice("admins")
+	if isConfigCheck && v.IsSet("admins") {
+		errorString += "ConfigCheck: admins not allowed\n"
+	}
 	c.Modos = v.GetIntSlice("modos")
+	if isConfigCheck && v.IsSet("modos") {
+		errorString += "ConfigCheck: modos not allowed\n"
+	}
 	c.Port = v.GetInt("port")
-
+	if isConfigCheck && v.IsSet("port") {
+		errorString += "ConfigCheck: port not allowed\n"
+	}
 	c.Meta.NowShowShallowBunnyAd = v.GetBool("meta.nowShowShallowBunnyAd")
 	c.Meta.NowShowDataSourceAd = v.GetBool("meta.nowShowDataSourceAd")
 	c.Meta.NowShowSisyDuckAd = v.GetBool("meta.nowShowSisyDuckAd")
@@ -104,63 +103,65 @@ func New(fileName string) *Config {
 	c.Meta.AboutShowSisyDuckIcon = v.GetBool("meta.aboutShowSisyDuckIcon")
 	c.Meta.NowMapImage = v.GetString("meta.nowMapImage")
 	c.Meta.RoomYouAreHereEmoticon = v.GetString("meta.roomYouAreHereEmoticon")
-	c.Meta.MobileAppName = v.GetString("meta.mobileAppName")
-	c.Meta.Prefix = v.GetString("meta.prefix")
-	c.Meta.Title = v.GetString("meta.title")
 	if c.Meta.RoomYouAreHereEmoticon == "" {
-		panic("no RoomYouAreHereEmoticon")
+		errorString += "missing meta.roomYouAreHereEmoticon"
 	}
+	c.Meta.MobileAppName = v.GetString("meta.mobileAppName\n")
+	c.Meta.Prefix = v.GetString("meta.prefix")
 	if c.Meta.Prefix == "" {
-		c.Meta.Prefix = extractFilename(fileName)
+		errorString += "missing meta.prefix\n"
 	}
+	c.Meta.Title = v.GetString("meta.title")
 	if c.Meta.Title == "" {
-		c.Meta.Title = c.Meta.Prefix
+		errorString += "missing meta.title\n"
 	}
-
-	if len(c.Rooms) == 0 {
-		log.Error().Msg(fmt.Sprintf("c.rooms: %v", c.Rooms))
-		panic("no rooms")
-	}
-
 	for _, room := range c.Rooms {
 		c.Shedules[room] = v.GetStringSlice(room)
-		if c.Shedules[room] == nil {
-			log.Error().Msg(fmt.Sprintf("No shedule for: %v", room))
+		if !v.IsSet(room) {
+			log.Warn().Msg(fmt.Sprintf("missing sets for %v", room))
 		}
 	}
 
 	c.Motd = v.GetString("motd")
-	if c.Motd == "" {
-		panic("no Motd")
-	}
 
-	c.Days = v.GetInt("days")
-	if c.Days == 0 {
-		panic("no Days")
+	c.NbDaysForInput = v.GetInt("nbDaysForInput")
+	if c.NbDaysForInput == 0 {
+		errorString += "Missing nbDaysForInput\n"
 	}
 
 	beg := v.GetString("beg")
 	if beg == "" {
-		panic("no beg")
+		errorString += "Missing beg\n"
 	}
 
 	c.LogFile = v.GetString("logFile")
-	if c.LogFile == "" {
-		panic("no LogFile")
+	if isConfigCheck {
+		if v.IsSet("logFile") {
+			errorString += "ConfigCheck: logFile not allowed\n"
+		}
+	} else if c.LogFile == "" {
+		errorString += "missing: logFile\n"
 	}
+
 	c.CommandsHistoryLogFile = v.GetString("commandsHistoryLogFile")
+	if isConfigCheck {
+		if v.IsSet("commandsHistoryLogFile") {
+			errorString += "ConfigCheck: commandsHistoryLogFile not allowed\n"
+		}
+	}
 
-	c.PrintThisIsLastWeekLineup = v.GetBool("printThisIsLastWeekLineup")
-
+	c.OldLineupMessage = v.GetString("oldLineupMessage")
 	c.NowSkipClosed = v.GetBool("nowSkipClosed")
 
 	c.Input = v.GetBool("input")
 
 	c.BeginningSchedule, err = dateparse.ParseLocal(beg)
 	if err != nil {
-		log.Error().Msg(err.Error())
-		panic(err.Error())
+		return nil, errors.New(errorString + err.Error())
 	}
 
-	return &c
+	if errorString != "" {
+		return nil, errors.New(errorString)
+	}
+	return &c, nil
 }

@@ -56,30 +56,44 @@ func isLocalhostTesting() bool {
 	return hostname == os.Getenv("SHALLOWBUNNY_LOCALHOST")
 }
 
-func initLogging(fileName string) *os.File {
+func initLogging(fileName string, checkConfig bool) *os.File {
 
-	if isLocalhostTesting() {
-		consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05"}
+	if checkConfig {
+		consoleWriter := zerolog.ConsoleWriter{
+			Out:     os.Stderr,
+			NoColor: true, // Disable colors
+		}
 		log.Logger = zerolog.New(consoleWriter).
 			With().
 			Timestamp().
-			Caller(). // Adjust the skip frame count as needed
 			Logger()
-		log.Info().Msg("isLocalhostTesting is true: not using logFile, logging initialized for console with colors and caller information")
+
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 		return nil
 	} else {
-		// Open files for different log levels
-		debugFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to open debug log file")
+		if isLocalhostTesting() {
+			consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05"}
+			log.Logger = zerolog.New(consoleWriter).
+				With().
+				Timestamp().
+				Caller(). // Adjust the skip frame count as needed
+				Logger()
+			log.Debug().Msg("isLocalhostTesting is true: not using logFile, logging initialized for console with colors and caller information")
+			return nil
+		} else {
+			// Open files for different log levels
+			debugFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+			if err != nil {
+				log.Fatal().Err(err).Msg("Failed to open debug log file")
+			}
+			log.Logger = zerolog.New(debugFile).
+				With().
+				Timestamp().
+				Caller(). // Adjust the skip frame count as needed
+				Logger()
+			zerolog.SetGlobalLevel(zerolog.InfoLevel) // Skip debug level
+			return debugFile                          // Return both file handles
 		}
-		log.Logger = zerolog.New(debugFile).
-			With().
-			Timestamp().
-			Caller(). // Adjust the skip frame count as needed
-			Logger()
-		zerolog.SetGlobalLevel(zerolog.InfoLevel) // Skip debug level
-		return debugFile                          // Return both file handles
 	}
 }
 
@@ -101,25 +115,31 @@ func main() {
 
 	configFile := "configs/default.yaml"
 	configFileArg := flag.String("config", "", "config file")
+	checkConfig := flag.Bool("checkConfig", false, "check config")
+
 	flag.Parse()
 
 	if *configFileArg != "" {
 		configFile = *configFileArg
-		log.Debug().Msg(fmt.Sprintf("using config file from arg: %v", configFile))
 	}
 
-	config := config.New(configFile)
-
+	config, err := config.New(configFile, *checkConfig)
+	if err != nil {
+		panic(err)
+	}
 	// Initialize logging and get the file handles
-	logFile := initLogging(config.LogFile)
+	logFile := initLogging(config.LogFile, *checkConfig)
 	if logFile != nil {
 		defer logFile.Close() // Ensure files are closed when main exits
+	}
+	if *configFileArg != "" {
+		log.Info().Msg(fmt.Sprintf("using config file from arg: %v", configFile))
 	}
 
 	apiToken := config.TelegramToken
 
 	if isLocalhostTesting() {
-		log.Info().Msg("isLocalhostTesting is true: using env SHALLOWBUNNY_TELEGRAM_API_TOKEN and port 8082")
+		log.Debug().Msg("isLocalhostTesting is true: using env SHALLOWBUNNY_TELEGRAM_API_TOKEN and port 8082")
 		envToken := os.Getenv("SHALLOWBUNNY_TELEGRAM_API_TOKEN")
 		if envToken != "" {
 			apiToken = envToken
@@ -131,55 +151,62 @@ func main() {
 
 	bot := bot.New(dao, config)
 
-	gin.SetMode(gin.ReleaseMode)
+	if *checkConfig {
+		log.Info().Msg("Checked config: OK")
+		log.Info().Msg(bot.PrintLinupForCheckConfig())
 
-	var server *http.Server
-
-	if config.Port != 0 {
-		log.Info().Msg("starting rest api")
-		server = createServer(bot)
-		go func() {
-			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				log.Fatal().Msg(err.Error())
-			}
-		}()
 	} else {
-		log.Info().Msg("skipping rest api")
-	}
 
-	if apiToken != "" {
-		log.Info().Msg("starting telegram bot")
-		telegram := telegram.New(apiToken, bot)
-		go func() {
-			restartMsg := fmt.Sprintf("restarted using %v key: %v", configFile, dao.GetKey())
-			bot.SendAdminsMessage(restartMsg)
-			bot.Log(0, restartMsg, "")
-		}()
-		go telegram.Listen()
-	} else {
-		log.Info().Msg("no telegram token. skipping telegram")
-	}
+		gin.SetMode(gin.ReleaseMode)
 
-	if apiToken != "" || server != nil {
-		// Create a channel to listen for termination signals
-		quit := make(chan os.Signal, 1)
+		var server *http.Server
 
-		// Relay SIGINT, SIGTERM to the quit channel
-		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		if config.Port != 0 {
+			log.Info().Msg("starting rest api")
+			server = createServer(bot)
+			go func() {
+				if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+					log.Fatal().Msg(err.Error())
+				}
+			}()
+		} else {
+			log.Info().Msg("skipping rest api")
+		}
 
-		// Block until we receive a signal
-		<-quit
+		if apiToken != "" {
+			log.Info().Msg("starting telegram bot")
+			telegram := telegram.New(apiToken, bot)
+			go func() {
+				restartMsg := fmt.Sprintf("restarted using %v key: %v", configFile, dao.GetKey())
+				bot.SendAdminsMessage(restartMsg)
+				bot.Log(0, restartMsg, "")
+			}()
+			go telegram.Listen()
+		} else {
+			log.Info().Msg("no telegram token. skipping telegram")
+		}
 
-		if server != nil {
-			log.Info().Msg("Shutting down rest api...")
-			// Create a context with a timeout for graceful shutdown
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			// Attempt a graceful shutdown
-			if err := server.Shutdown(ctx); err != nil {
-				log.Error().Msg(fmt.Sprintf("Rest api to shutdown:%v", err))
+		if apiToken != "" || server != nil {
+			// Create a channel to listen for termination signals
+			quit := make(chan os.Signal, 1)
+
+			// Relay SIGINT, SIGTERM to the quit channel
+			signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+			// Block until we receive a signal
+			<-quit
+
+			if server != nil {
+				log.Info().Msg("Shutting down rest api...")
+				// Create a context with a timeout for graceful shutdown
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				// Attempt a graceful shutdown
+				if err := server.Shutdown(ctx); err != nil {
+					log.Error().Msg(fmt.Sprintf("Rest api to shutdown:%v", err))
+				}
 			}
 		}
+		log.Info().Msg("Server exiting")
 	}
-	log.Info().Msg("Server exiting")
 }

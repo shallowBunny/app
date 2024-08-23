@@ -20,7 +20,7 @@ meta:
  title: "demo festival"
 
 beg: 'Fri Aug 16 2025'
-days: 3
+nbDaysForInput: 3
 modos: [ ]
 logFile: '../demo.log'
 commandsHistoryLogFile: '../demoHistory.log'

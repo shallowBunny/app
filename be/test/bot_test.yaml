@@ -1,7 +1,7 @@
-motd: "xxx"
+motd: "test"
 beg: "Thu Aug 15 2024"
 telegramToken: "xxx"
-days: 4
+nbDaysForInput: 4
 admins: [-123]
 modos: [-123]
 logFile: "/dev/null"
@@ -19,8 +19,9 @@ meta:
   nowMapImage: ""
   roomYouAreHereEmoticon: "🐰"
   mobileAppName: ""
-  prefix: ""
-  title: ""
+  prefix: "test"
+  title: "test"
+
 rooms: ["🍵", "🔨"]
 🍵:
   - "1 01:00 60 0 A"

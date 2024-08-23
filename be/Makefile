@@ -15,3 +15,6 @@ bunny:
 
 demo:
 	reflex -r '\.(go|yaml)$$' -s -- go run cmd/main.go -config=configs/demo.yaml
+
+test:
+	go test ./...
