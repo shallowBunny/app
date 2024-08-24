@@ -24,7 +24,7 @@ const (
 )
 
 func TestSerialisation(t *testing.T) {
-	config, err := config.New("../../test/bot_test.yaml", false)
+	config, err := config.New("../../configs/bot_test.yaml", false)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -59,10 +59,6 @@ func TestSerialisation(t *testing.T) {
 	log.Debug().Msg("TestSerialisation 2")
 	log.Error().Msg(fmt.Sprintf("<%v>", bot.RootLineUp))
 
-	//log.Error().Msg(fmt.Sprintf("<%v>", bot.RootLineUp.Dump()))
-
-	//t.Fatalf("")
-
 	log.Debug().Msg("TestSerialisation 3")
 
 	err = dao.DeleteBot(config.BeginningSchedule)
@@ -74,7 +70,7 @@ func TestSerialisation(t *testing.T) {
 
 func TestEvents(t *testing.T) {
 
-	config, err := config.New("../../test/bot_test.yaml", false)
+	config, err := config.New("../../configs/bot_test.yaml", false)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -136,7 +132,7 @@ func TestInputMergeAndRebase(t *testing.T) {
 	t.Log("Test started")
 
 	// create config object
-	config, err := config.New("../../test/bot_test.yaml", false)
+	config, err := config.New("../../configs/bot_test.yaml", false)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -268,7 +264,7 @@ func TestInputMergeAndRebase(t *testing.T) {
 func TestInputMultipleMergeAndRebase(t *testing.T) {
 
 	// create config object
-	config, err := config.New("../../test/bot_test.yaml", false)
+	config, err := config.New("../../configs/bot_test.yaml", false)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

@@ -18,7 +18,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/shallowBunny/app/be/internal/bot"
 	"github.com/shallowBunny/app/be/internal/bot/config"
+	"github.com/shallowBunny/app/be/internal/bot/dao"
 	DaoDb "github.com/shallowBunny/app/be/internal/bot/dao/daoDb"
+	DaoMem "github.com/shallowBunny/app/be/internal/bot/dao/daoMem"
+
 	"github.com/shallowBunny/app/be/internal/bot/telegram"
 )
 
@@ -107,12 +110,6 @@ func main() {
 	// handle err
 	time.Local = loc // -> this is setting the global timezone
 
-	redisclient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-
 	configFile := "configs/default.yaml"
 	configFileArg := flag.String("config", "", "config file")
 	checkConfig := flag.Bool("checkConfig", false, "check config")
@@ -147,7 +144,18 @@ func main() {
 		config.Port = 8082
 	}
 
-	dao := DaoDb.New(apiToken, redisclient)
+	var dao dao.Dao
+
+	if *checkConfig {
+		dao = DaoMem.New()
+	} else {
+		redisclient := redis.NewClient(&redis.Options{
+			Addr:     "localhost:6379",
+			Password: "", // no password set
+			DB:       0,  // use default DB
+		})
+		dao = DaoDb.New(apiToken, redisclient)
+	}
 
 	bot := bot.New(dao, config)
 

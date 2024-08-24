@@ -464,7 +464,7 @@ func (b Bot) GetLineUpForUser(chatId int64) *lineUp.LineUp {
 }
 
 func (b Bot) PrintLinupForCheckConfig() string {
-	res := "\n\nLineup in each rooms:\n"
+	res := "\n\nLineup in each room:\n"
 	for _, v := range b.RootLineUp.Rooms {
 		res += b.RootLineUp.PrintForMerge(v)
 	}
