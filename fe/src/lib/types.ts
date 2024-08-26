@@ -11,7 +11,7 @@ export interface Meta {
 	aboutBigIcon: string;
 	aboutShowShallowBunnyIcon: boolean;
 	aboutShowSisyDuckIcon: boolean;
-	nowBotUrl: string;
+	botUrl: string;
 	nowMapImage: string;
 	nowShowDataSourceAd: boolean;
 	nowShowShallowBunnyAd: boolean;

@@ -296,9 +296,9 @@ const Layout: React.FC = () => {
 														<img className="w-full" src={DuckIcon} alt="duck" />
 													</a>
 												)}
-												{data.meta.nowBotUrl && (
+												{data.meta.botUrl && (
 													<a
-														href={data.meta.nowBotUrl}
+														href={data.meta.botUrl}
 														target="_blank"
 														className="relative max-w-[64px] block overflow-hidden"
 													>
