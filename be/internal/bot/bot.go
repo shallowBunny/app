@@ -4,14 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/ottoDaffy/go-diff/diffmatchpatch"
 	"github.com/shallowBunny/app/be/internal/bot/config"
 	"github.com/shallowBunny/app/be/internal/bot/dao"
@@ -62,7 +60,7 @@ type Bot struct {
 	admins                 []int
 	modos                  []int
 	channel                chan Message
-	Config                 *config.Config
+	config                 *config.Config
 	commandsHistoryLogFile *os.File
 	logs                   string
 	roomsEmoticons         []string
@@ -119,7 +117,7 @@ func (b Bot) Save() error {
 	_ = res
 	//log.Trace().Msg(res)
 
-	return b.dao.SaveBot(b.Config.BeginningSchedule, botString)
+	return b.dao.SaveBot(b.config.BeginningSchedule, botString)
 }
 
 func PrettyString(str string) (string, error) {
@@ -199,7 +197,7 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 	if !gotBotFromDB {
 		bot = &Bot{
 			UsersLineUps: make(map[int64]*lineUp.LineUp),
-			RootLineUp:   lineUp.New(config.BeginningSchedule, config.NbDaysForInput, config.Input, config.OldLineupMessage, config.NowSkipClosed, config.Buttons, config.Rooms, config.Shedules),
+			RootLineUp:   lineUp.New(config.BeginningSchedule, config.NbDaysForInput, config.Input, config.BotOldLineupMessage, config.NowSkipClosed, config.Buttons, config.Rooms, config.Shedules),
 		}
 		gotBotFromDB = false
 		log.Info().Msg("loading bot from config")
@@ -207,7 +205,7 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 	bot.dao = dao
 	bot.users = users.New(dao, config.BeginningSchedule)
 	bot.commandsHistoryLogFile = f
-	bot.Config = config
+	bot.config = config
 	bot.channel = make(chan Message)
 	bot.admins = config.Admins
 	bot.modos = config.Modos
@@ -244,6 +242,9 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 
 	return bot
 }
+func (b Bot) GetConfig() *config.Config {
+	return b.config
+}
 
 // user = 0 pour les logs web
 func (b *Bot) Log(user int64, command, userString string) {
@@ -265,7 +266,7 @@ func (b *Bot) Log(user int64, command, userString string) {
 				log.Error().Msg(err.Error())
 			}
 		}
-		for _, u := range b.Config.Admins {
+		for _, u := range b.admins {
 			userId := int64(u)
 			lineup := b.GetLineUpForUser(userId)
 			if lineup.IsUserInLogs(userId) {
@@ -336,15 +337,19 @@ func splitMessages(messages []Message) []Message {
 }
 
 func (b Bot) SendAdminsMessage(input string) {
+	msg := "#admin " + input
 	for _, v := range b.admins {
-		b.sendMessage(int64(v), "#admin "+input)
+		b.sendMessage(int64(v), msg)
 	}
+	log.Info().Msg(msg)
 }
 
 func (b Bot) SendModosMessage(input string) {
+	msg := "#modo " + input
 	for _, v := range b.modos {
-		b.sendMessage(int64(v), "#modo "+input)
+		b.sendMessage(int64(v), msg)
 	}
+	log.Info().Msg(msg)
 }
 
 func (b Bot) sendMessage(userId int64, msg string) {
@@ -423,7 +428,7 @@ func (b *Bot) ShowRoom(chatId int64, lineup *lineUp.LineUp, index int) string {
 	if b.magicRoomButton {
 		b.users.SetLastShownRoom(chatId, (index+1)%len(b.rooms))
 	}
-	return lineup.Print(b.Config.Meta.RoomYouAreHereEmoticon, -1, b.rooms[index])
+	return lineup.Print(b.config.Meta.RoomYouAreHereEmoticon, -1, b.rooms[index])
 }
 
 func (b *Bot) defaultCommand(orig string, lineup *lineUp.LineUp, chatId int64) string {
@@ -521,7 +526,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 	if !b.users.DoesUserExists(chatId) {
 		log.Info().Msg("new user")
 		messages = append(messages, Message{
-			Text:    b.Config.Motd,
+			Text:    b.config.BotMotd,
 			Buttons: nil,
 			UserID:  chatId,
 			Html:    true,
@@ -532,19 +537,9 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 	var modoMsg string
 	var html bool
 
-	/*
-		if b.closed {
-			command = "closed"
-		}
-	*/
-
 	log.Debug().Msg(fmt.Sprintf("command <%v> <%v>", command, stopNotificationsCommand))
 
 	switch command {
-	case "closed":
-		answer += lineUp.FindDJ(orig, time.Now())
-		answer += "\n"
-		answer += b.Config.Motd + "\n\n"
 	case "start":
 		err := b.users.SetUserAsNew(chatId)
 		if err != nil {
@@ -552,7 +547,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 		}
 		answer += lineUp.PrintCurrent()
 	case "help":
-		answer = b.Config.Motd + "\n\n"
+		answer = b.config.BotMotd + "\n\n"
 		html = true
 	case "stop", stopNotificationsCommand:
 		err := b.users.SetNotificationsUser(chatId, false)
@@ -567,7 +562,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 		}
 		answer = startedNoticationsMessage
 	case "p", "all":
-		res += lineUp.Print(b.Config.Meta.RoomYouAreHereEmoticon, -1, "")
+		res += lineUp.Print(b.config.Meta.RoomYouAreHereEmoticon, -1, "")
 		answer = res
 	case "now":
 		answer = lineUp.PrintCurrent()
@@ -671,7 +666,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 			answer = b.defaultCommand(orig, lineUp, chatId)
 		}
 	case inputs.MergeCommand:
-		if b.Config.Input || b.IsAdmin(chatId) {
+		if b.config.Input || b.IsAdmin(chatId) {
 
 			switch lineUp.CurrentInputCommand(chatId) {
 			case "":
@@ -732,7 +727,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 			answer = b.defaultCommand(orig, lineUp, chatId)
 		}
 	case inputs.InputCommand:
-		if b.Config.Input || b.IsAdmin(chatId) {
+		if b.config.Input || b.IsAdmin(chatId) {
 			newLineup, inputCommandResult := lineUp.InputCommand(chatId, arg)
 			if newLineup != lineUp {
 				log.Debug().Msg(fmt.Sprintf("created new lineup for user %d", chatId))
@@ -741,7 +736,6 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 			}
 			answer = inputCommandResult.Answer
 			buttons = inputCommandResult.Buttons
-			//adminMsg = inputCommandResult.AnswerAdmin
 			b.Save()
 		} else {
 			answer = b.defaultCommand(orig, lineUp, chatId)
@@ -814,7 +808,7 @@ func (b Bot) GetButtonsForUser(chatId int64) []string {
 	}
 	buttons := []string{}
 
-	for _, v := range b.Config.Buttons {
+	for _, v := range b.config.Buttons {
 		if b.magicRoomButton {
 			if v == helpCommand {
 				lastShown := b.users.GetLastShownRoom(chatId)
@@ -858,86 +852,4 @@ func (b *Bot) GroupChange(chatId int64, userString, group string) {
 	} else {
 		log.Debug().Msg(msg)
 	}
-}
-
-type Response struct {
-	Meta config.Meta  `json:"meta"`
-	Sets []lineUp.Set `json:"sets"`
-}
-
-// Define the Manifest struct
-type Manifest struct {
-	Name            string `json:"name"`
-	ShortName       string `json:"short_name"`
-	StartURL        string `json:"start_url"`
-	Display         string `json:"display"`
-	BackgroundColor string `json:"background_color"`
-	Lang            string `json:"lang"`
-	Scope           string `json:"scope"`
-	Description     string `json:"description"`
-	ThemeColor      string `json:"theme_color"`
-	Icons           []Icon `json:"icons"`
-}
-
-// Define the Icon struct
-type Icon struct {
-	Src     string `json:"src"`
-	Sizes   string `json:"sizes"`
-	Type    string `json:"type"`
-	Purpose string `json:"purpose,omitempty"`
-}
-
-func getClientIPByRequest(req *http.Request) (ip string) {
-	forwarded := req.Header.Get("X-Forwarded-For")
-	if forwarded != "" {
-		ips := strings.Split(forwarded, ",")
-		if len(ips) >= 1 {
-			return strings.TrimSpace(ips[0])
-		}
-	}
-	return "?"
-}
-
-func (b *Bot) GetManifest(c *gin.Context) {
-	manifest := Manifest{
-		Name:            b.Config.Meta.MobileAppName,
-		ShortName:       b.Config.Meta.MobileAppName,
-		StartURL:        "/",
-		Display:         "standalone",
-		BackgroundColor: "#222123",
-		Lang:            "en",
-		Scope:           "/",
-		Description:     "An app to display DJ sets",
-		ThemeColor:      "#222123",
-		Icons: []Icon{
-			{
-				Src:     b.Config.Meta.Prefix + "-192x192.png",
-				Sizes:   "192x192",
-				Type:    "image/png",
-				Purpose: "any",
-			},
-			{
-				Src:     b.Config.Meta.Prefix + "-180x180.png",
-				Sizes:   "180x180",
-				Type:    "image/png",
-				Purpose: "maskable",
-			},
-			{
-				Src:     b.Config.Meta.Prefix + "-192x192.png",
-				Sizes:   "192x192",
-				Type:    "image/png",
-				Purpose: "maskable",
-			},
-		},
-	}
-	c.JSON(http.StatusOK, manifest)
-}
-
-func (b *Bot) GetLineUp(c *gin.Context) {
-	var response Response
-	ip := getClientIPByRequest(c.Request)
-	response.Sets = b.RootLineUp.Sets
-	response.Meta = b.Config.Meta
-	b.Log(0, c.Request.UserAgent(), ip)
-	c.JSON(http.StatusOK, response)
 }

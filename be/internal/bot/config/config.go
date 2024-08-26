@@ -16,7 +16,7 @@ type Meta struct {
 	AboutBigIcon              string `json:"aboutBigIcon"`
 	AboutShowShallowBunnyIcon bool   `json:"aboutShowShallowBunnyIcon"`
 	AboutShowSisyDuckIcon     bool   `json:"aboutShowSisyDuckIcon"`
-	NowBotUrl                 string `json:"nowBotUrl"`
+	BotUrl                    string `json:"botUrl"`
 	NowMapImage               string `json:"nowMapImage"`
 	NowShowDataSourceAd       bool   `json:"nowShowDataSourceAd"`
 	NowShowShallowBunnyAd     bool   `json:"nowShowShallowBunnyAd"`
@@ -31,22 +31,24 @@ type Meta struct {
 }
 
 type Config struct {
-	Meta                   Meta
-	BeginningSchedule      time.Time
-	Rooms                  []string
-	Shedules               map[string][]string
-	Motd                   string
-	NbDaysForInput         int
-	Buttons                []string
-	TelegramToken          string
-	Input                  bool
-	LogFile                string
-	CommandsHistoryLogFile string
-	Admins                 []int
-	Modos                  []int
-	NowSkipClosed          bool
-	Port                   int
-	OldLineupMessage       string
+	Meta                               Meta
+	BeginningSchedule                  time.Time
+	BotMotd                            string
+	BotOldLineupMessage                string
+	TelegramDeleteLeftTheGroupMessages bool
+	Admins                             []int
+	Modos                              []int
+	TelegramToken                      string
+	ServerToken                        string
+	Rooms                              []string
+	Shedules                           map[string][]string
+	NbDaysForInput                     int
+	Buttons                            []string
+	Input                              bool
+	LogFile                            string
+	CommandsHistoryLogFile             string
+	NowSkipClosed                      bool
+	Port                               int
 }
 
 func New(fileName string, isConfigCheck bool) (*Config, error) {
@@ -69,35 +71,34 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 		return nil, err
 	}
 
-	c.TelegramToken = v.GetString("telegramToken")
-	if isConfigCheck && v.IsSet("telegramToken") {
-		errorString += "ConfigCheck: telegramToken not allowed\n"
+	if isConfigCheck && v.IsSet("secrets") {
+		errorString += "ConfigCheck: secrets not allowed\n"
+	} else {
+		c.TelegramToken = v.GetString("secrets.telegramToken")
+		c.Admins = v.GetIntSlice("secrets.admins")
+		c.Modos = v.GetIntSlice("secrets.modos")
+		c.Port = v.GetInt("secrets.port")
+		c.ServerToken = v.GetString("secrets.serverToken")
+		c.CommandsHistoryLogFile = v.GetString("secrets.commandsHistoryLogFile")
+		c.LogFile = v.GetString("secrets.logFile")
 	}
+
+	c.TelegramDeleteLeftTheGroupMessages = v.GetBool("public.telegramDeleteLeftTheGroupMessages")
+
 	c.Buttons = v.GetStringSlice("buttons")
 	c.Rooms = v.GetStringSlice("rooms")
 
 	if len(c.Rooms) == 0 {
 		errorString += "missing rooms\n"
 	}
-	c.Admins = v.GetIntSlice("admins")
-	if isConfigCheck && v.IsSet("admins") {
-		errorString += "ConfigCheck: admins not allowed\n"
-	}
-	c.Modos = v.GetIntSlice("modos")
-	if isConfigCheck && v.IsSet("modos") {
-		errorString += "ConfigCheck: modos not allowed\n"
-	}
-	c.Port = v.GetInt("port")
-	if isConfigCheck && v.IsSet("port") {
-		errorString += "ConfigCheck: port not allowed\n"
-	}
+
 	c.Meta.NowShowShallowBunnyAd = v.GetBool("meta.nowShowShallowBunnyAd")
 	c.Meta.NowShowDataSourceAd = v.GetBool("meta.nowShowDataSourceAd")
 	c.Meta.NowShowSisyDuckAd = v.GetBool("meta.nowShowSisyDuckAd")
 	c.Meta.NowShowPleaseSendData = v.GetBool("meta.nowShowPleaseSendData")
 	c.Meta.NowTextAfterMap = v.GetString("meta.nowTextAfterMap")
 	c.Meta.NowTextWhenFinished = v.GetString("meta.nowTextWhenFinished")
-	c.Meta.NowBotUrl = v.GetString("meta.nowBotUrl")
+	c.Meta.BotUrl = v.GetString("meta.botUrl")
 	c.Meta.AboutBigIcon = v.GetString("meta.aboutBigIcon")
 	c.Meta.AboutShowShallowBunnyIcon = v.GetBool("meta.aboutShowShallowBunnyIcon")
 	c.Meta.AboutShowSisyDuckIcon = v.GetBool("meta.aboutShowSisyDuckIcon")
@@ -122,42 +123,26 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 		}
 	}
 
-	c.Motd = v.GetString("motd")
+	c.BotMotd = v.GetString("botMotd")
 
 	c.NbDaysForInput = v.GetInt("nbDaysForInput")
 	if c.NbDaysForInput == 0 {
 		errorString += "Missing nbDaysForInput\n"
 	}
 
-	beg := v.GetString("beg")
-	if beg == "" {
-		errorString += "Missing beg\n"
-	}
-
-	c.LogFile = v.GetString("logFile")
-	if isConfigCheck {
-		if v.IsSet("logFile") {
-			errorString += "ConfigCheck: logFile not allowed\n"
-		}
-	} else if c.LogFile == "" {
-		errorString += "missing: logFile\n"
-	}
-
-	c.CommandsHistoryLogFile = v.GetString("commandsHistoryLogFile")
-	if isConfigCheck {
-		if v.IsSet("commandsHistoryLogFile") {
-			errorString += "ConfigCheck: commandsHistoryLogFile not allowed\n"
-		}
-	}
-
-	c.OldLineupMessage = v.GetString("oldLineupMessage")
+	c.BotOldLineupMessage = v.GetString("botOldLineupMessage")
 	c.NowSkipClosed = v.GetBool("nowSkipClosed")
 
 	c.Input = v.GetBool("input")
 
-	c.BeginningSchedule, err = dateparse.ParseLocal(beg)
-	if err != nil {
-		return nil, errors.New(errorString + err.Error())
+	beg := v.GetString("beginningSchedule")
+	if beg == "" {
+		errorString += "Missing beginningSchedule\n"
+	} else {
+		c.BeginningSchedule, err = dateparse.ParseLocal(beg)
+		if err != nil {
+			errorString += err.Error()
+		}
 	}
 
 	if errorString != "" {

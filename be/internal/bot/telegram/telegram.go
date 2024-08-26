@@ -3,24 +3,17 @@ package telegram
 import (
 	"fmt"
 	"html"
-	"os"
 	"regexp"
-	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/rs/zerolog/log"
 	"github.com/shallowBunny/app/be/internal/bot"
-	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
 )
 
 type Telegram struct {
 	bot *bot.Bot
 	api *tgbotapi.BotAPI
 }
-
-var (
-	doOnce = true //false
-)
 
 func New(apiToken string, bot *bot.Bot) *Telegram {
 
@@ -156,28 +149,26 @@ func (t Telegram) Listen() {
 	// Let's go through each update that we're getting from Telegram.
 	for update := range updates {
 
-		/*
-			b, err := json.MarshalIndent(update, "", "   ")
-			if err != nil {
-				log.Error().Msg(err.Error())
-			} else {
-				fmt.Println(string(b))
-			}
-		*/
-
 		// Telegram can send many types of updates depending on what your Bot
 		// is up to. We only want to look at messages for now, so we can
 		// discard any other updates.
-
-		if update.MyChatMember != nil {
-			log.Debug().Msg("update.MyChatMember...")
-			continue
-		}
 
 		if update.Message == nil {
 			log.Debug().Msg("update. update.Message == nil ...")
 			continue
 		}
+
+		if t.bot.GetConfig().TelegramDeleteLeftTheGroupMessages {
+			if update.Message.LeftChatMember != nil {
+				log.Debug().Msg("deleting message")
+				deleteMsg := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, update.Message.MessageID)
+				if _, err := t.api.Send(deleteMsg); err != nil {
+					log.Error().Msg(fmt.Sprintf("Failed to delete message: %v", err))
+				}
+			}
+			continue
+		}
+
 		if update.Message.Chat.IsGroup() || update.Message.Chat.IsChannel() {
 			log.Debug().Msg("update.Message.Chat.Type = group")
 			userString := getUsername(update)
@@ -193,28 +184,6 @@ func (t Telegram) Listen() {
 		//PrintForTime(sets, teleportTimeString)
 		//update.Message.Text
 		var msg tgbotapi.MessageConfig
-
-		if !doOnce {
-			doOnce = true
-
-			hostname, err := os.Hostname()
-			if err != nil {
-				panic(nil)
-			}
-			if hostname == "Mac-mini.local" {
-				currentTime := time.Now().Add(24 * time.Hour)
-				inputCommands := []string{
-					inputs.InputCommand, "🔨 Hammahalle", "Fri", "23:00", "Fggg", "210", inputs.ValidateCommand,
-					inputs.MergeCommand, inputs.MergeSubmitCommand,
-					inputs.InputCommand, "🔨 Hammahalle", currentTime.Format("Mon"), "2:30", "DJ FART", "90", inputs.ValidateCommand,
-					inputs.MergeCommand, inputs.MergeSubmitCommand}
-
-				for _, tc := range inputCommands {
-					answer := t.bot.ProcessCommand(update.Message.Chat.ID, tc, "test")
-					log.Debug().Msg(fmt.Sprintf("xx %v answer = %v", tc, answer))
-				}
-			}
-		}
 
 		if update.Message.Chat.ID > 0 { // to skip joins in channels
 			messages := t.bot.ProcessCommand(update.Message.Chat.ID, update.Message.Text, getUsername(update))

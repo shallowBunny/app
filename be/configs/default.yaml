@@ -1,12 +1,18 @@
-title: "Demo title"
-motd: 'Hello, this is a demo bot.  Click one of the buttons below. If you type a room name, bunny will show its program. If you type something else, it will try to find sets matching that DJ.
+secrets:
+ modos: [ ]
+ port: 8084
+ logFile: '../demo.log'
+ commandsHistoryLogFile: '../demoHistory.log'
+
+beginningSchedule: 'Fri Aug 16 2025'
+botMotd: 'Hello, this is a demo bot.  Click one of the buttons below. If you type a room name, bunny will show its program. If you type something else, it will try to find sets matching that DJ.
 '
 
 meta:
  aboutBigIcon:  "demo-icon.jpg"
  aboutShowShallowBunnyIcon: true
  aboutShowSisyDuckIcon: true
- nowBotUrl: "https://t.me/festivalDemoBot"
+ botUrl: "https://t.me/festivalDemoBot"
  nowMapImage: ""
  nowShowDataSourceAd: false
  nowShowShallowBunnyAd: false
@@ -19,15 +25,11 @@ meta:
  roomYouAreHereEmoticon: '🐰'
  title: "demo festival"
 
-beg: 'Fri Aug 16 2025'
 nbDaysForInput: 3
-modos: [ ]
-logFile: '../demo.log'
-commandsHistoryLogFile: '../demoHistory.log'
+
 buttons: [ 'Now', 'ALL', 'Help' ]
 input: false
 nowSkipClosed: false
-port: 8084
 
 rooms: ["⌛ Zeitmaschine", "🌾 Mühle", "🏎 Turbo Tüff", "🛵 Furore", "🛺 Rave Rikscha", "🤡 Jesterfield"  ]
 

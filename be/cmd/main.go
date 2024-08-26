@@ -38,6 +38,7 @@ func createServer(b *bot.Bot) *http.Server {
 	}))
 
 	r.GET("/api", b.GetLineUp)
+	r.POST("/api", b.TokenAuthMiddleware(), b.Restart)
 	r.GET("/manifest", b.GetManifest)
 	r.GET("/manifest.webmanifest", b.GetManifest)
 
@@ -45,7 +46,7 @@ func createServer(b *bot.Bot) *http.Server {
 
 	// Create an HTTP server using the Gin router
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", b.Config.Port),
+		Addr:    fmt.Sprintf(":%d", b.GetConfig().Port),
 		Handler: r, // Gin engine as the HTTP handler
 	}
 	return server

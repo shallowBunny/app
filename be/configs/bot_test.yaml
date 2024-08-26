@@ -1,10 +1,11 @@
-motd: "test"
-beg: "Thu Aug 15 2024"
-telegramToken: "xxx"
+beginningSchedule: "Thu Aug 15 2024"
 nbDaysForInput: 4
-admins: [-123]
-modos: [-123]
-logFile: "/dev/null"
+
+secrets:
+  admins: [-123]
+  modos: [-123]
+  logFile: "/dev/null"
+
 input: true
 meta:
   nowShowShallowBunnyAd: false
@@ -12,7 +13,7 @@ meta:
   nowShowSisyDuckAd: false
   nowTextAfterMap: ""
   nowTextWhenFinished: ""
-  nowBotUrl: ""
+  botUrl: ""
   aboutBigIcon: ""
   aboutShowShallowBunnyIcon: false
   aboutShowSisyDuckIcon: true

@@ -16,5 +16,11 @@ bunny:
 demo:
 	reflex -r '\.(go|yaml)$$' -s -- go run cmd/main.go -config=configs/demo.yaml
 
+develop:
+	reflex -r '\.(go|yaml)$$' -s -- go run cmd/main.go -config=configs/develop.yaml
+
 test:
 	go test ./...
+
+check:
+	go run cmd/main.go -config=../sisyduck.com/config.yaml  -checkConfig
