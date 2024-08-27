@@ -21,7 +21,7 @@ type Meta struct {
 	NowShowDataSourceAd       bool   `json:"nowShowDataSourceAd"`
 	NowShowShallowBunnyAd     bool   `json:"nowShowShallowBunnyAd"`
 	NowShowSisyDuckAd         bool   `json:"nowShowSisyDuckAd"`
-	NowShowPleaseSendData     bool   `json:"nowShowPleaseSendData"`
+	NowSubmitPR               string `json:"nowSubmitPR"`
 	NowTextAfterMap           string `json:"nowTextAfterMap"`
 	NowTextWhenFinished       string `json:"nowTextWhenFinished"`
 	MobileAppName             string `json:"mobileAppName"`
@@ -95,7 +95,7 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 	c.Meta.NowShowShallowBunnyAd = v.GetBool("meta.nowShowShallowBunnyAd")
 	c.Meta.NowShowDataSourceAd = v.GetBool("meta.nowShowDataSourceAd")
 	c.Meta.NowShowSisyDuckAd = v.GetBool("meta.nowShowSisyDuckAd")
-	c.Meta.NowShowPleaseSendData = v.GetBool("meta.nowShowPleaseSendData")
+	c.Meta.NowSubmitPR = v.GetString("meta.nowSubmitPR")
 	c.Meta.NowTextAfterMap = v.GetString("meta.nowTextAfterMap")
 	c.Meta.NowTextWhenFinished = v.GetString("meta.nowTextWhenFinished")
 	c.Meta.BotUrl = v.GetString("meta.botUrl")

@@ -76,17 +76,17 @@ export const Now: FunctionComponent<NowProps> = ({
 						</li>
 					)}
 
-					{data.meta.nowShowPleaseSendData && (
+					{data.meta.nowSubmitPR && (
 						<li key="infowpa" className="mb-4">
-							Lineup data for this event is not available yet, when you have
-							access to it, please share a picture in this{" "}
+							You can submit data{" "}
 							<a
-								href="https://t.me/shallowBunny"
+								href={data.meta.nowSubmitPR}
 								target="_blank"
 								className="underline cursor-pointer"
 							>
-								Telegram group
+								there
 							</a>
+							... 😘
 						</li>
 					)}
 

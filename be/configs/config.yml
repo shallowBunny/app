@@ -15,7 +15,7 @@ meta:
  nowShowDataSourceAd: false
  nowShowShallowBunnyAd: false
  nowShowSisyDuckAd: false
- nowShowPleaseSendData: false
+ nowSubmitPR: ""
  nowTextAfterMap: "This is a demo festival"
  nowTextWhenFinished: "Demo finished"
  mobileAppName: "demo app"

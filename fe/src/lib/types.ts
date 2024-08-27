@@ -16,7 +16,7 @@ export interface Meta {
 	nowShowDataSourceAd: boolean;
 	nowShowShallowBunnyAd: boolean;
 	nowShowSisyDuckAd: boolean;
-	nowShowPleaseSendData: boolean;
+	nowSubmitPR: string;
 	nowTextAfterMap: string;
 	nowTextWhenFinished: string;
 	mobileAppName: string;
