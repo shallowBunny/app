@@ -97,9 +97,13 @@ func (b Bot) GetLineUp(c *gin.Context) {
 }
 
 type RestartRequest struct {
-	MergedBy  string `json:"merged_by"`
-	CreatedBy string `json:"created_by"`
-	PrUrl     string `json:"pr_url"`
+	MergedBy    string `json:"merged_by"`
+	CreatedBy   string `json:"created_by"`
+	PrUrl       string `json:"pr_url"`
+	PushType    string `json:"push_type"`
+	PushedBy    string `json:"pushed_by"`
+	PusherName  string `json:"pusher_name"`
+	PusherEmail string `json:"pusher_email"`
 }
 
 func (b Bot) Restart(c *gin.Context) {
@@ -112,8 +116,15 @@ func (b Bot) Restart(c *gin.Context) {
 		})
 		return
 	}
+	var restartMsg string
+	if req.PushType == "merge" {
+		restartMsg = fmt.Sprintf("Restart: Merged by: %s, Created by: %s, PR URL: %s", req.MergedBy, req.CreatedBy, req.PrUrl)
+	} else if req.PushType == "force push" {
+		restartMsg = fmt.Sprintf("Restart: Force-pushed by: %s, Pusher: %s (%s), PR URL: %s", req.PushedBy, req.PusherName, req.PusherEmail, req.PrUrl)
+	} else {
+		restartMsg = fmt.Sprintf("Restart: Unknown push type. Pushed by: %s, Pusher: %s (%s), PR URL: %s", req.PushedBy, req.PusherName, req.PusherEmail, req.PrUrl)
+	}
 
-	restartMsg := fmt.Sprintf("Restart: Merged by: %s, Created by: %s, PR URL: %s", req.MergedBy, req.CreatedBy, req.PrUrl)
 	b.SendAdminsMessage(restartMsg)
 
 	// Send the response back to the client
@@ -131,6 +142,7 @@ func (b Bot) Restart(c *gin.Context) {
 func (b Bot) TokenAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("Authorization")
+
 		if token != "Bearer "+b.config.ServerToken || b.config.ServerToken == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			c.Abort()

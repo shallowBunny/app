@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"net/http"
+	"os/exec"
 	"os/signal"
 	"syscall"
 	"time"
@@ -60,45 +61,47 @@ func isLocalhostTesting() bool {
 	return hostname == os.Getenv("SHALLOWBUNNY_LOCALHOST")
 }
 
-func initLogging(fileName string, checkConfig bool) *os.File {
-
-	if checkConfig {
-		consoleWriter := zerolog.ConsoleWriter{
-			Out:     os.Stderr,
-			NoColor: true, // Disable colors
-		}
+func initLogging(fileName string) *os.File {
+	if isLocalhostTesting() {
+		consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05"}
 		log.Logger = zerolog.New(consoleWriter).
 			With().
 			Timestamp().
+			Caller().
 			Logger()
-
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		log.Debug().Msg("isLocalhostTesting is true: not using logFile, logging initialized for console with colors and caller information")
 		return nil
 	} else {
-		if isLocalhostTesting() {
-			consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05"}
+		zerolog.SetGlobalLevel(zerolog.InfoLevel) // Skip debug level
+		logFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			// will be used for checkConfig option
+			consoleWriter := zerolog.ConsoleWriter{
+				Out:     os.Stderr,
+				NoColor: true, // Disable colors
+			}
 			log.Logger = zerolog.New(consoleWriter).
 				With().
 				Timestamp().
-				Caller(). // Adjust the skip frame count as needed
 				Logger()
-			log.Debug().Msg("isLocalhostTesting is true: not using logFile, logging initialized for console with colors and caller information")
 			return nil
-		} else {
-			// Open files for different log levels
-			debugFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-			if err != nil {
-				log.Fatal().Err(err).Msg("Failed to open debug log file")
-			}
-			log.Logger = zerolog.New(debugFile).
-				With().
-				Timestamp().
-				Caller(). // Adjust the skip frame count as needed
-				Logger()
-			zerolog.SetGlobalLevel(zerolog.InfoLevel) // Skip debug level
-			return debugFile                          // Return both file handles
 		}
+		log.Logger = zerolog.New(logFile).
+			With().
+			Timestamp().
+			Caller().
+			Logger()
+		return logFile
 	}
+}
+
+func runRestartScript(runRestartScriptArg string) (string, error) {
+	cmd := exec.Command("./restart.sh", runRestartScriptArg)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("runRestartScript failed: %v\n%s", err, string(output))
+	}
+	return string(output), nil
 }
 
 func main() {
@@ -111,28 +114,36 @@ func main() {
 	// handle err
 	time.Local = loc // -> this is setting the global timezone
 
-	configFile := "configs/default.yaml"
-	configFileArg := flag.String("config", "", "config file")
-	checkConfig := flag.Bool("checkConfig", false, "check config")
+	configFileArg := flag.String("config", "", "use given config file")
+	checkConfig := flag.Bool("check", false, "check config")
+	restartScriptArg := flag.String("script", "", "restart script")
 
 	flag.Parse()
 
-	if *configFileArg != "" {
-		configFile = *configFileArg
+	if *configFileArg == "" {
+		fmt.Println("Error: --config is a mandatory flag")
+		flag.Usage() // Display the usage information
+		os.Exit(1)   // Exit the program with a non-zero status
 	}
 
-	config, err := config.New(configFile, *checkConfig)
+	var restartScriptOutput string
+	var restartScriptError error
+	if *restartScriptArg != "" {
+		restartScriptOutput, restartScriptError = runRestartScript(*restartScriptArg)
+	}
+
+	config, err := config.New(*configFileArg, *checkConfig)
 	if err != nil {
 		panic(err)
 	}
+
 	// Initialize logging and get the file handles
-	logFile := initLogging(config.LogFile, *checkConfig)
+	logFile := initLogging(config.LogFile)
 	if logFile != nil {
 		defer logFile.Close() // Ensure files are closed when main exits
 	}
-	if *configFileArg != "" {
-		log.Info().Msg(fmt.Sprintf("using config file from arg: %v", configFile))
-	}
+
+	log.Info().Msg("using config " + config.LogFile)
 
 	apiToken := config.TelegramToken
 
@@ -186,7 +197,17 @@ func main() {
 			log.Info().Msg("starting telegram bot")
 			telegram := telegram.New(apiToken, bot)
 			go func() {
-				restartMsg := fmt.Sprintf("restarted using %v key: %v", configFile, dao.GetKey())
+
+				restartMsg := fmt.Sprintf("✅ Restarted using %v key: %v", *configFileArg, dao.GetKey())
+
+				if restartScriptError != nil {
+					restartMsg += "\n⚠️ " + restartScriptError.Error() + "\n"
+				} else {
+					restartMsg += "\n✅ "
+				}
+				if restartScriptOutput != "" {
+					restartMsg += restartScriptOutput
+				}
 				bot.SendAdminsMessage(restartMsg)
 				bot.Log(0, restartMsg, "")
 			}()

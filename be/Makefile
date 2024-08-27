@@ -2,25 +2,7 @@ build:
 	go build -o shallowBunny cmd/main.go 
 
 run:		
-	go run cmd/main.go
-
-duck:
-	reflex -r '\.(go|yaml)$$' -s -- go run cmd/main.go -config=configs/duck.yaml
-
-duckdev:
-	reflex -r '\.(go|yaml)$$' -s -- go run cmd/main.go -config=configs/duckdev.yaml
-
-bunny:
-	reflex -r '\.(go|yaml)$$' -s -- go run cmd/main.go -config=configs/bunny.yaml
-
-demo:
-	reflex -r '\.(go|yaml)$$' -s -- go run cmd/main.go -config=configs/demo.yaml
-
-develop:
-	reflex -r '\.(go|yaml)$$' -s -- go run cmd/main.go -config=configs/develop.yaml
+	go run cmd/main.go -config=configs/config.yml
 
 test:
 	go test ./...
-
-check:
-	go run cmd/main.go -config=../sisyduck.com/config.yaml  -checkConfig

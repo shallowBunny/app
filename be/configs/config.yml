@@ -1,8 +1,6 @@
 secrets:
  modos: [ ]
  port: 8084
- logFile: '../demo.log'
- commandsHistoryLogFile: '../demoHistory.log'
 
 beginningSchedule: 'Fri Aug 16 2025'
 botMotd: 'Hello, this is a demo bot.  Click one of the buttons below. If you type a room name, bunny will show its program. If you type something else, it will try to find sets matching that DJ.
