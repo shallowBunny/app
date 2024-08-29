@@ -10,6 +10,7 @@ shallowBunny is a lineup app for festivals, that can work offline.
 
 ## configs
 
+[shallowbunny.com](https://github.com/shallowBunny/shallowbunny.com)
 [sisyduck.com](https://github.com/shallowBunny/sisyduck.com)
 
 ## social

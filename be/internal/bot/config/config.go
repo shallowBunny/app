@@ -13,21 +13,22 @@ import (
 )
 
 type Meta struct {
-	AboutBigIcon              string `json:"aboutBigIcon"`
-	AboutShowShallowBunnyIcon bool   `json:"aboutShowShallowBunnyIcon"`
-	AboutShowSisyDuckIcon     bool   `json:"aboutShowSisyDuckIcon"`
-	BotUrl                    string `json:"botUrl"`
-	NowMapImage               string `json:"nowMapImage"`
-	NowShowDataSourceAd       bool   `json:"nowShowDataSourceAd"`
-	NowShowShallowBunnyAd     bool   `json:"nowShowShallowBunnyAd"`
-	NowShowSisyDuckAd         bool   `json:"nowShowSisyDuckAd"`
-	NowSubmitPR               string `json:"nowSubmitPR"`
-	NowTextAfterMap           string `json:"nowTextAfterMap"`
-	NowTextWhenFinished       string `json:"nowTextWhenFinished"`
-	MobileAppName             string `json:"mobileAppName"`
-	Prefix                    string `json:"prefix"`
-	RoomYouAreHereEmoticon    string `json:"roomYouAreHereEmoticon"`
-	Title                     string `json:"title"`
+	AboutBigIcon              string   `json:"aboutBigIcon"`
+	AboutShowShallowBunnyIcon bool     `json:"aboutShowShallowBunnyIcon"`
+	AboutShowSisyDuckIcon     bool     `json:"aboutShowSisyDuckIcon"`
+	BotUrl                    string   `json:"botUrl"`
+	NowMapImage               string   `json:"nowMapImage"`
+	NowShowDataSourceAd       bool     `json:"nowShowDataSourceAd"`
+	NowShowShallowBunnyAd     bool     `json:"nowShowShallowBunnyAd"`
+	NowShowSisyDuckAd         bool     `json:"nowShowSisyDuckAd"`
+	NowSubmitPR               string   `json:"nowSubmitPR"`
+	NowTextAfterMap           string   `json:"nowTextAfterMap"`
+	NowTextWhenFinished       string   `json:"nowTextWhenFinished"`
+	MobileAppName             string   `json:"mobileAppName"`
+	Prefix                    string   `json:"prefix"`
+	RoomYouAreHereEmoticon    string   `json:"roomYouAreHereEmoticon"`
+	Rooms                     []string `json:"rooms"`
+	Title                     string   `json:"title"`
 }
 
 type Config struct {

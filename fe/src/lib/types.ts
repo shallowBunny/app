@@ -21,6 +21,7 @@ export interface Meta {
 	nowTextWhenFinished: string;
 	mobileAppName: string;
 	prefix: string;
+	rooms: string[];
 	roomYouAreHereEmoticon: string;
 	title: string;
 }

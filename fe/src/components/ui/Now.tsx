@@ -24,7 +24,10 @@ export const Now: FunctionComponent<NowProps> = ({
 	const [mapImageSrc, setMapImageSrc] = useState<string | null>(null); // State to store the loaded image URL
 	const overriddenNow = getOverriddenCurrentTime();
 	const roomSets = findCurrentAndNextSets(data.sets, overriddenNow);
-	const roomSituations = convertRoomSetsToRoomSituation(roomSets).reverse();
+	const roomSituations = convertRoomSetsToRoomSituation(
+		roomSets,
+		data.meta.rooms
+	).reverse();
 
 	useEffect(() => {
 		if (data.meta.nowMapImage) {

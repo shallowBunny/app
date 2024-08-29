@@ -92,6 +92,7 @@ func (b Bot) GetLineUp(c *gin.Context) {
 	ip := getClientIPByRequest(c.Request)
 	response.Sets = b.RootLineUp.Sets
 	response.Meta = b.config.Meta
+	response.Meta.Rooms = b.RootLineUp.Rooms
 	b.Log(0, c.Request.UserAgent(), ip)
 	c.JSON(http.StatusOK, response)
 }

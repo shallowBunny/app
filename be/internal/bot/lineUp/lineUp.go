@@ -53,6 +53,7 @@ type LineUp struct {
 const (
 	UnknownDJ           = "?"
 	closed              = "🚫 closed"
+	noDataRoom          = "⚠️ no data"
 	openedFloor         = "✅"
 	noData              = "⚠️ No data available yet ⚠️"
 	missingData         = "\n\n⚠️ Some data is missing ⚠️"
@@ -699,11 +700,14 @@ func (l LineUp) PrintCurrentForTime(when *string) string {
 		}
 	}
 
+	foundRoom := make(map[string]bool)
+
 	roomsFound := 0
 
 	for i, v := range l.Sets {
 
 		if v.Room != room {
+			foundRoom[v.Room] = true
 			roomsFound++
 			permanentelyClosed := false
 			if !nextFound && i != 0 {
@@ -785,6 +789,13 @@ func (l LineUp) PrintCurrentForTime(when *string) string {
 			if !l.NowSkipClosed && room != "" {
 				res += room + " " + closed
 			}
+		}
+	}
+
+	for _, v := range l.Rooms {
+		ok := foundRoom[v]
+		if !ok {
+			res += "\n" + v + " " + noDataRoom
 		}
 	}
 

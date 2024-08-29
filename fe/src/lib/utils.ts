@@ -86,13 +86,21 @@ const formatTimeForClosedStages = (date: Date): string => {
 };
 
 export function convertRoomSetsToRoomSituation(
-	roomSets: Record<string, RoomSets>
+	roomSets: Record<string, RoomSets>,
+	allRooms: string[]
 ): RoomSituation[] {
-	return Object.keys(roomSets).map((room) => {
+	// Start with an array of RoomSituation with all rooms set to "⚠️ no data"
+	const roomSituations: RoomSituation[] = allRooms.map((room) => {
 		const sets = roomSets[room];
-		if (!sets) {
-			return { room, situation: `${room} 🚫 closed` };
-		}
+		return {
+			room,
+			situation: sets ? `${room} 🚫 closed` : `${room} ⚠️ no data`,
+		};
+	});
+
+	// Iterate over the rooms in roomSets
+	Object.keys(roomSets).forEach((room) => {
+		const sets = roomSets[room];
 
 		let situation = `${room} `;
 
@@ -118,11 +126,11 @@ export function convertRoomSetsToRoomSituation(
 				: `, ${date.toLocaleDateString("en-GB", options)} at ${date.toLocaleTimeString("en-GB", timeOptions)}`;
 		};
 
-		if (sets.current) {
+		if (sets?.current) {
 			situation += `✅ ${sets.current.dj}`;
 		}
 
-		if (sets.closing) {
+		if (sets?.closing) {
 			if (sets.current) {
 				const currentEndTime = formatTime(new Date(sets.current.end), true); // Omit weekday for closing time
 				situation += ` (Closing${currentEndTime})`;
@@ -132,7 +140,7 @@ export function convertRoomSetsToRoomSituation(
 			} else {
 				situation += `🚫 closed`;
 			}
-		} else if (sets.next) {
+		} else if (sets?.next) {
 			const nextStartTime = new Date(sets.next.start);
 			const omitWeekday =
 				sets.current && sets.current.end.getTime() === nextStartTime.getTime();
@@ -142,8 +150,14 @@ export function convertRoomSetsToRoomSituation(
 				situation += ` (${sets.next.dj}${formatTime(nextStartTime, omitWeekday || false)})`;
 			}
 		}
-		return { room, situation };
+
+		const situationIndex = roomSituations.findIndex((rs) => rs.room === room);
+		if (situationIndex !== -1) {
+			roomSituations[situationIndex]!.situation = situation;
+		}
 	});
+
+	return roomSituations;
 }
 
 export const cn = clsx;
