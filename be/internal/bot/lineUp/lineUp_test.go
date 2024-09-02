@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/shallowBunny/app/be/internal/bot/config"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
 )
 
@@ -39,10 +40,30 @@ var (
 func TestLineUpInput(t *testing.T) {
 
 	tt := time.Now()
+
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
 	startTime := currentTime
 
-	lu := New(startTime, 3, true, "", false, nil, rooms, roomSchedule)
+	config := &config.Config{
+		Lineup: config.Lineup{
+			BeginningSchedule: startTime,
+			Rooms:             rooms,
+			Sets: map[string][]config.Set{
+				"roomA": []config.Set{
+					config.Set{Day: 0,
+						Hour:     23,
+						Minute:   00,
+						Duration: 120,
+						Dj:       "MADmoiselle",
+					},
+				},
+			},
+		},
+		NbDaysForInput: 3,
+		Input:          true,
+		NowSkipClosed:  false,
+	} //
+	lu := New(config)
 
 	got := lu.Dump()
 	want := `roomA:
@@ -130,7 +151,52 @@ func TestFindRoom(t *testing.T) {
 		roomA: {"0 23:00 120 0 MADmoiselle", "0 23:00 120 0 Mad max"},
 	}
 	startTime := time.Now().Add(time.Hour)
-	lu := New(startTime, 3, true, "", false, nil, rooms, roomSchedule2)
+
+	config := &config.Config{
+		Lineup: config.Lineup{
+			BeginningSchedule: startTime,
+			Rooms:             rooms,
+			Sets: map[string][]config.Set{
+				"roomA": []config.Set{
+					config.Set{Day: 0,
+						Hour:     23,
+						Minute:   00,
+						Duration: 120,
+						Dj:       "MADmoiselle",
+					},
+				},
+				"roomTurm": []config.Set{
+					config.Set{Day: 3,
+						Hour:     02,
+						Minute:   00,
+						Duration: 120,
+						Dj:       "Animal Trainer",
+					},
+				},
+				"roomTanz": []config.Set{
+					config.Set{Day: 2,
+						Hour:     3,
+						Minute:   00,
+						Duration: 120,
+						Dj:       "Ava Irandoost",
+					},
+				},
+				"roomSonn": []config.Set{
+					config.Set{Day: 4,
+						Hour:     18,
+						Minute:   00,
+						Duration: 120,
+						Dj:       "Bassphilia",
+					},
+				},
+			},
+		},
+		NbDaysForInput: 3,
+		Input:          true,
+		NowSkipClosed:  false,
+	}
+
+	lu := New(config)
 
 	inputTest := []test{
 		{input: "Tanzwuste", want: roomTanz},
@@ -151,7 +217,28 @@ func TestFindDJ(t *testing.T) {
 		roomA: {"3 18:00 60 0 Robyn Schulkowsky & Gebrüder Teichmann"},
 	}
 	startTime := time.Now().Add(time.Hour)
-	lu := New(startTime, 3, true, "", false, nil, rooms, roomSchedule)
+
+	config := &config.Config{
+		Lineup: config.Lineup{
+			BeginningSchedule: startTime,
+			Rooms:             rooms,
+			Sets: map[string][]config.Set{
+				"roomA": []config.Set{
+					config.Set{Day: 3,
+						Hour:     18,
+						Minute:   00,
+						Duration: 60,
+						Dj:       "Robyn Schulkowsky & Gebrüder Teichmann",
+					},
+				},
+			},
+		},
+		NbDaysForInput: 3,
+		Input:          true,
+		NowSkipClosed:  false,
+	}
+
+	lu := New(config)
 
 	day := time.Now().Add(time.Hour * 24 * 3).Format("Monday")
 

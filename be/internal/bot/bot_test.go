@@ -33,7 +33,7 @@ func TestSerialisation(t *testing.T) {
 	log.Debug().Msg("TestSerialisation")
 
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
-	config.BeginningSchedule = currentTime
+	config.Lineup.BeginningSchedule = currentTime
 
 	redisclient := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
@@ -42,7 +42,7 @@ func TestSerialisation(t *testing.T) {
 	})
 	dao := DaoDb.New("apiToken", redisclient)
 
-	dao.DeleteBot(config.BeginningSchedule)
+	dao.DeleteBot(config.Lineup.BeginningSchedule)
 
 	_ = dao
 	dao2 := DaoMem.New()
@@ -61,7 +61,7 @@ func TestSerialisation(t *testing.T) {
 
 	log.Debug().Msg("TestSerialisation 3")
 
-	err = dao.DeleteBot(config.BeginningSchedule)
+	err = dao.DeleteBot(config.Lineup.BeginningSchedule)
 	if err != nil {
 		log.Error().Msg(fmt.Sprintf("<%v>", err.Error()))
 	}
@@ -77,7 +77,7 @@ func TestEvents(t *testing.T) {
 
 	tt := time.Now()
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
-	config.BeginningSchedule = currentTime
+	config.Lineup.BeginningSchedule = currentTime
 
 	log.Debug().Msg(fmt.Sprintf("using currentTime = %v", currentTime))
 
@@ -139,7 +139,7 @@ func TestInputMergeAndRebase(t *testing.T) {
 
 	tt := time.Now()
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
-	config.BeginningSchedule = currentTime
+	config.Lineup.BeginningSchedule = currentTime
 	log.Debug().Msg(fmt.Sprintf("using currentTime = %v", currentTime))
 	var userID int64 = 123
 	currentTime = currentTime.Add(24 * time.Hour)
@@ -271,7 +271,7 @@ func TestInputMultipleMergeAndRebase(t *testing.T) {
 
 	tt := time.Now()
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
-	config.BeginningSchedule = currentTime
+	config.Lineup.BeginningSchedule = currentTime
 	log.Debug().Msg(fmt.Sprintf("using currentTime = %v", currentTime))
 	var userID int64 = 123
 	currentTime = currentTime.Add(24 * time.Hour)

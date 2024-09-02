@@ -173,7 +173,7 @@ func main() {
 
 	if *checkConfig {
 		log.Info().Msg("Checked config: OK")
-		log.Info().Msg(bot.PrintLinupForCheckConfig())
+		log.Info().Msg(bot.PrintLineupForCheckConfig())
 
 	} else {
 

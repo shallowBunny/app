@@ -2,63 +2,100 @@ package config
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/araddon/dateparse"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 type Meta struct {
-	AboutBigIcon              string   `json:"aboutBigIcon"`
-	AboutShowShallowBunnyIcon bool     `json:"aboutShowShallowBunnyIcon"`
-	AboutShowSisyDuckIcon     bool     `json:"aboutShowSisyDuckIcon"`
-	BotUrl                    string   `json:"botUrl"`
-	NowMapImage               string   `json:"nowMapImage"`
-	NowShowDataSourceAd       bool     `json:"nowShowDataSourceAd"`
-	NowShowShallowBunnyAd     bool     `json:"nowShowShallowBunnyAd"`
-	NowShowSisyDuckAd         bool     `json:"nowShowSisyDuckAd"`
-	NowSubmitPR               string   `json:"nowSubmitPR"`
-	NowTextAfterMap           string   `json:"nowTextAfterMap"`
-	NowTextWhenFinished       string   `json:"nowTextWhenFinished"`
-	MobileAppName             string   `json:"mobileAppName"`
-	Prefix                    string   `json:"prefix"`
-	RoomYouAreHereEmoticon    string   `json:"roomYouAreHereEmoticon"`
-	Rooms                     []string `json:"rooms"`
-	Title                     string   `json:"title"`
+	AboutBigIcon              string   `json:"aboutBigIcon" yaml:"aboutBigIcon"`
+	AboutShowShallowBunnyIcon bool     `json:"aboutShowShallowBunnyIcon" yaml:"aboutShowShallowBunnyIcon"`
+	AboutShowSisyDuckIcon     bool     `json:"aboutShowSisyDuckIcon" yaml:"aboutShowSisyDuckIcon"`
+	BotUrl                    string   `json:"botUrl" yaml:"botUrl"`
+	NowMapImage               string   `json:"nowMapImage" yaml:"nowMapImage"`
+	NowShowDataSourceAd       bool     `json:"nowShowDataSourceAd" yaml:"nowShowDataSourceAd"`
+	NowShowShallowBunnyAd     bool     `json:"nowShowShallowBunnyAd" yaml:"nowShowShallowBunnyAd"`
+	NowShowSisyDuckAd         bool     `json:"nowShowSisyDuckAd" yaml:"nowShowSisyDuckAd"`
+	NowSubmitPR               string   `json:"nowSubmitPR" yaml:"nowSubmitPR"`
+	NowTextAfterMap           string   `json:"nowTextAfterMap" yaml:"nowTextAfterMap"`
+	NowTextWhenFinished       string   `json:"nowTextWhenFinished" yaml:"nowTextWhenFinished"`
+	MobileAppName             string   `json:"mobileAppName" yaml:"mobileAppName"`
+	Prefix                    string   `json:"prefix" yaml:"prefix"`
+	RoomYouAreHereEmoticon    string   `json:"roomYouAreHereEmoticon" yaml:"roomYouAreHereEmoticon"`
+	Rooms                     []string `json:"rooms" yaml:"rooms"`
+	Title                     string   `json:"title" yaml:"title"`
 }
 
 type Config struct {
-	Meta                               Meta
-	BeginningSchedule                  time.Time
-	BotMotd                            string
-	BotOldLineupMessage                string
-	TelegramDeleteLeftTheGroupMessages bool
-	Admins                             []int
-	Modos                              []int
-	TelegramToken                      string
-	ServerToken                        string
-	Rooms                              []string
-	Shedules                           map[string][]string
-	NbDaysForInput                     int
-	Buttons                            []string
-	Input                              bool
-	LogFile                            string
-	CommandsHistoryLogFile             string
-	NowSkipClosed                      bool
-	Port                               int
+	Meta                               Meta     `yaml:"meta"`
+	BotMotd                            string   `yaml:"botMotd"`
+	BotOldLineupMessage                string   `yaml:"botOldLineupMessage"`
+	TelegramDeleteLeftTheGroupMessages bool     `yaml:"telegramDeleteLeftTheGroupMessages"`
+	Admins                             []int    `yaml:"admins"`
+	Modos                              []int    `yaml:"modos"`
+	TelegramToken                      string   `yaml:"telegramToken"`
+	ServerToken                        string   `yaml:"serverToken"`
+	NbDaysForInput                     int      `yaml:"nbDaysForInput"`
+	Buttons                            []string `yaml:"buttons"`
+	Input                              bool     `yaml:"input"`
+	LogFile                            string   `yaml:"logFile"`
+	CommandsHistoryLogFile             string   `yaml:"commandsHistoryLogFile"`
+	NowSkipClosed                      bool     `yaml:"nowSkipClosed"`
+	Port                               int      `yaml:"port"`
+	Lineup                             Lineup   `yaml:"lineup"`
+}
+
+type Set struct {
+	Day      int    `yaml:"day"`
+	Duration int    `yaml:"duration"`
+	Dj       string `yaml:"dj"`
+	Hour     int    `yaml:"hour"`
+	Minute   int    `yaml:"minute"`
+}
+
+type Lineup struct {
+	BeginningSchedule time.Time        `yaml:"-"`
+	Rooms             []string         `yaml:"rooms"`
+	Sets              map[string][]Set `yaml:"sets"`
+}
+
+func WriteConfigToFile(config Config, fileName string) error {
+	file, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := yaml.NewEncoder(file)
+	defer encoder.Close()
+
+	return encoder.Encode(config)
+}
+
+func WriteConfigToFile2(config Config, fileName string) error {
+	file, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ") // For pretty printing
+	return encoder.Encode(config)
 }
 
 func New(fileName string, isConfigCheck bool) (*Config, error) {
 
 	errorString := ""
 
-	c := Config{
-		Shedules: make(map[string][]string),
-	}
+	c := Config{}
 
 	data, err := os.ReadFile(fileName)
 	if err != nil {
@@ -87,11 +124,6 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 	c.TelegramDeleteLeftTheGroupMessages = v.GetBool("public.telegramDeleteLeftTheGroupMessages")
 
 	c.Buttons = v.GetStringSlice("buttons")
-	c.Rooms = v.GetStringSlice("rooms")
-
-	if len(c.Rooms) == 0 {
-		errorString += "missing rooms\n"
-	}
 
 	c.Meta.NowShowShallowBunnyAd = v.GetBool("meta.nowShowShallowBunnyAd")
 	c.Meta.NowShowDataSourceAd = v.GetBool("meta.nowShowDataSourceAd")
@@ -117,11 +149,29 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 	if c.Meta.Title == "" {
 		errorString += "missing meta.title\n"
 	}
-	for _, room := range c.Rooms {
-		c.Shedules[room] = v.GetStringSlice(room)
-		if !v.IsSet(room) {
-			log.Warn().Msg(fmt.Sprintf("missing sets for %v", room))
+
+	v2 := v.Sub("lineup")
+	if v2 == nil {
+		errorString += "Error: 'lineup' key not found in configuration\n"
+	} else {
+		c.Lineup.Sets = make(map[string][]Set)
+		lineup := Lineup{
+			Sets: make(map[string][]Set),
 		}
+		if err := v2.Unmarshal(&lineup); err != nil {
+			errorString += fmt.Sprintf("Error unmarshalling lineup: %v\n", err)
+		}
+
+		for _, room := range lineup.Rooms {
+			sets, ok := lineup.Sets[strings.ToLower(room)]
+			if ok {
+				c.Lineup.Sets[room] = sets
+			}
+		}
+		if len(lineup.Rooms) == 0 {
+			errorString += "missing rooms\n"
+		}
+		c.Lineup.Rooms = lineup.Rooms
 	}
 
 	c.BotMotd = v.GetString("botMotd")
@@ -140,7 +190,7 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 	if beg == "" {
 		errorString += "Missing beginningSchedule\n"
 	} else {
-		c.BeginningSchedule, err = dateparse.ParseLocal(beg)
+		c.Lineup.BeginningSchedule, err = dateparse.ParseLocal(beg)
 		if err != nil {
 			errorString += err.Error()
 		}
@@ -149,5 +199,6 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 	if errorString != "" {
 		return nil, errors.New(errorString)
 	}
+
 	return &c, nil
 }

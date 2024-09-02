@@ -23,12 +23,40 @@ meta:
   prefix: "test"
   title: "test"
 
-rooms: ["🍵", "🔨"]
-🍵:
-  - "1 01:00 60 0 A"
-  - "1 02:00 60 0 B"
-  - "1 03:00 60 0 C"
-  - "1 04:00 60 0 D"
-🔨:
-  - "1 03:00 180 0 E"
-  - "1 06:00 180 0 F"
+lineup:
+  rooms:
+    - "🍵"
+    - "🔨"
+  sets:
+    "🍵":
+      - day: 1
+        duration: 60
+        dj: A
+        hour: 1
+        minute: 0
+      - day: 1
+        duration: 60
+        dj: B
+        hour: 2
+        minute: 0
+      - day: 1
+        duration: 60
+        dj: C
+        hour: 3
+        minute: 0
+      - day: 1
+        duration: 60
+        dj: D
+        hour: 4
+        minute: 0
+    "🔨":
+      - day: 1
+        duration: 180
+        dj: E
+        hour: 3
+        minute: 0
+      - day: 1
+        duration: 180
+        dj: F
+        hour: 6
+        minute: 0

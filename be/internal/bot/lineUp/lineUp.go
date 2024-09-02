@@ -8,6 +8,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/shallowBunny/app/be/internal/bot/config"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
 
@@ -78,8 +79,13 @@ func (l LineUp) DuplicateLineUp() *LineUp {
 	return new
 }
 
-func New(startTime time.Time, nbDaysForInput int, input bool, oldLineupMessage string, NowSkipClosed bool,
-	defaultButtons []string, rooms []string, roomSchedulesShedules map[string][]string) *LineUp {
+func New(config *config.Config) *LineUp {
+
+	startTime := config.Lineup.BeginningSchedule
+	nbDaysForInput := config.NbDaysForInput
+	input := config.Input
+	oldLineupMessage := config.BotOldLineupMessage
+	NowSkipClosed := config.NowSkipClosed
 
 	days := []string{}
 
@@ -91,40 +97,26 @@ func New(startTime time.Time, nbDaysForInput int, input bool, oldLineupMessage s
 	lineUp := &LineUp{
 		Sets:             []Set{},
 		events:           []Event{},
-		Inputs:           inputs.New(days, rooms),
+		Inputs:           inputs.New(days, config.Lineup.Rooms),
 		StartTime:        startTime,
-		Rooms:            rooms,
+		Rooms:            config.Lineup.Rooms,
 		Changes:          []inputs.InputCommandResultSet{},
 		Input:            input,
 		OldLineupMessage: oldLineupMessage,
 		NowSkipClosed:    NowSkipClosed,
 	}
 
-	for _, room := range rooms {
+	for _, room := range config.Lineup.Rooms {
 
-		sets, ok := roomSchedulesShedules[room]
+		sets, ok := config.Lineup.Sets[room]
 		if !ok {
-			log.Error().Msg("missing room")
+
+			log.Error().Msg(fmt.Sprintf("missing room <%v>", room))
 			continue
 		}
 
 		for _, s := range sets {
-
-			day := 0
-			hour := 0
-			minute := 0
-			duration := 0
-			kind := 0
-
-			fmt.Sscanf(s, "%d %d:%d %d %d", &day, &hour, &minute, &duration, &kind)
-
-			split := strings.Split(s, " ")
-			if len(split) < 5 {
-				log.Error().Msg(fmt.Sprintf("error on parsing <%s>", s))
-			}
-			djName := strings.Join(split[4:], " ")
-
-			msg := lineUp.AddSet(lineUp.NewSet(djName, room, day, hour, minute, duration, kind))
+			msg := lineUp.AddSet(lineUp.NewSet(s.Dj, room, s.Day, s.Hour, s.Minute, s.Duration, 0))
 			if msg != "" {
 				log.Error().Msg(msg)
 			}

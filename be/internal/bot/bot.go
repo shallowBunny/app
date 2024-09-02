@@ -117,7 +117,7 @@ func (b Bot) Save() error {
 	_ = res
 	//log.Trace().Msg(res)
 
-	return b.dao.SaveBot(b.config.BeginningSchedule, botString)
+	return b.dao.SaveBot(b.config.Lineup.BeginningSchedule, botString)
 }
 
 func PrettyString(str string) (string, error) {
@@ -156,7 +156,7 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 	gotBotFromDB := true
 
 	if config.Input {
-		botString, err := dao.GetBot(config.BeginningSchedule)
+		botString, err := dao.GetBot(config.Lineup.BeginningSchedule)
 		if err == nil {
 			res, err := PrettyString(botString)
 			if err != nil {
@@ -197,22 +197,22 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 	if !gotBotFromDB {
 		bot = &Bot{
 			UsersLineUps: make(map[int64]*lineUp.LineUp),
-			RootLineUp:   lineUp.New(config.BeginningSchedule, config.NbDaysForInput, config.Input, config.BotOldLineupMessage, config.NowSkipClosed, config.Buttons, config.Rooms, config.Shedules),
+			RootLineUp:   lineUp.New(config),
 		}
 		gotBotFromDB = false
 		log.Info().Msg("loading bot from config")
 	}
 	bot.dao = dao
-	bot.users = users.New(dao, config.BeginningSchedule)
+	bot.users = users.New(dao, config.Lineup.BeginningSchedule)
 	bot.commandsHistoryLogFile = f
 	bot.config = config
 	bot.channel = make(chan Message)
 	bot.admins = config.Admins
 	bot.modos = config.Modos
-	bot.rooms = config.Rooms
-	bot.magicRoomButton = len(config.Rooms) < maxMnbRoomsForRoomButton
+	bot.rooms = config.Lineup.Rooms
+	bot.magicRoomButton = len(config.Lineup.Rooms) < maxMnbRoomsForRoomButton
 
-	for _, v := range config.Rooms {
+	for _, v := range config.Lineup.Rooms {
 		emo := ExtractEmoticons(v)
 		log.Trace().Msg(fmt.Sprintf("Rooms:%v -> <%v>", v, emo))
 		bot.roomsEmoticons = append(bot.roomsEmoticons, emo)
@@ -468,7 +468,7 @@ func (b Bot) GetLineUpForUser(chatId int64) *lineUp.LineUp {
 	return b.RootLineUp
 }
 
-func (b Bot) PrintLinupForCheckConfig() string {
+func (b Bot) PrintLineupForCheckConfig() string {
 	res := "\n\nLineup in each room:\n"
 	for _, v := range b.RootLineUp.Rooms {
 		res += b.RootLineUp.PrintForMerge(v)
