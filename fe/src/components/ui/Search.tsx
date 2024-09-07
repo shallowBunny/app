@@ -26,34 +26,44 @@ const Search: React.FC<SearchProps> = ({ sets }) => {
 		setQuery(inputValue);
 		const words = inputValue.split(" ");
 		if (inputValue.length > 0) {
-			const matchedSets = sets.filter((set) =>
-				words.some((word) =>
-					set.dj
-						.split(" ")
-						.map((djWord) => djWord.replace(/[^a-zA-Z]/g, ""))
-						.some(
-							(cleanedDjWord) =>
-								levenshtein.get(
-									cleanedDjWord.toLowerCase(),
+			// Build a new data structure that contains the matched set and its Levenshtein distance
+			const matchedSetsWithDistance = sets.flatMap((set) =>
+				words.flatMap(
+					(word) =>
+						set.dj
+							.split(" ")
+							.map((djWord) => djWord.replace(/[^a-zA-Z]/g, ""))
+							.map((cleanedDjWord) => {
+								// Truncate cleanedDjWord to use only the first len(word) characters
+								const truncatedDjWord = cleanedDjWord.slice(0, word.length);
+								// Calculate the Levenshtein distance
+								const distance = levenshtein.get(
+									truncatedDjWord.toLowerCase(),
 									word.toLowerCase()
-								) <= 2
-						)
+								);
+
+								// Only return the set if the distance is <= 2
+								if (distance <= 2) {
+									return {
+										set, // The matched set
+										distance, // Levenshtein distance
+									};
+								}
+								return null; // Exclude if no match
+							})
+							.filter(Boolean) // Remove null values from the array
 				)
 			);
 
-			// Sort the results by Levenshtein distance
-			const sortedSets = matchedSets.sort((a, b) => {
-				const distanceA = levenshtein.get(
-					a.dj.toLowerCase(),
-					inputValue.toLowerCase()
-				);
-				const distanceB = levenshtein.get(
-					b.dj.toLowerCase(),
-					inputValue.toLowerCase()
-				);
-				return distanceA - distanceB;
-			});
-			setFilteredSets(sortedSets);
+			// Sort the matched sets by their Levenshtein distance
+			const sortedSets = matchedSetsWithDistance.sort(
+				(a, b) => a.distance - b.distance
+			);
+
+			// Extract the sets from the sorted array
+			const sortedSetList = sortedSets.map((item) => item.set);
+
+			setFilteredSets(sortedSetList);
 		} else {
 			setFilteredSets([]);
 		}
