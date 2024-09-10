@@ -1,0 +1,38 @@
+name: Build Frontend
+
+on:
+  push:
+    branches:
+      - "**" # Trigger the workflow on push to any branch
+  pull_request:
+    branches:
+      - "**" # Trigger the workflow on pull requests to any branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js environment (use Node.js 22.4.1)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22.4.1" # Install Node.js 22.4.1
+
+      # Step 3: Install pnpm globally
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      # Step 4: Install dependencies using pnpm
+      - name: Install dependencies
+        working-directory: ./fe # Navigate to the 'fe' directory where the frontend is located
+        run: pnpm install
+
+      # Step 5: Build the frontend using pnpm
+      - name: Build frontend
+        working-directory: ./fe
+        run: pnpm build

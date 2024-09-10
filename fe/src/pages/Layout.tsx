@@ -104,8 +104,12 @@ const Layout: React.FC = () => {
 			const mobileWebAppTitle = data.meta.mobileAppName || "Lineup app";
 			setAppleMobileWebAppTitle(mobileWebAppTitle);
 
-			// Check if all sets are in the past and the last one finished more than 3 hours ago
-			const allSetsPast = allSetsInPastAndFinishedMoreThanOneHourAgo(data.sets);
+			// Check if all sets are in the past since 1 hour and we have nowTextWhenFinished set
+			const allSetsPast = !!(
+				allSetsInPastAndFinishedMoreThanOneHourAgo(data.sets) &&
+				data.meta.nowTextWhenFinished &&
+				data.meta.nowTextWhenFinished.trim().length > 0
+			);
 			if (!allSetsPast) {
 				const pageTitle = data.meta.title || "Lineup app";
 				setPageTitle(pageTitle);
