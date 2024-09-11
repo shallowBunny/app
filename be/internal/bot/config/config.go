@@ -53,17 +53,17 @@ type Config struct {
 }
 
 type Set struct {
-	Day      int    `yaml:"day"`
-	Duration int    `yaml:"duration"`
-	Dj       string `yaml:"dj"`
-	Hour     int    `yaml:"hour"`
-	Minute   int    `yaml:"minute"`
+	Day      int    `yaml:"day" json:"day"`
+	Duration int    `yaml:"duration" json:"duration"`
+	Dj       string `yaml:"dj" json:"dj"`
+	Hour     int    `yaml:"hour" json:"hour"`
+	Minute   int    `yaml:"minute" json:"minute"`
 }
 
 type Lineup struct {
-	BeginningSchedule time.Time        `yaml:"-"`
-	Rooms             []string         `yaml:"rooms"`
-	Sets              map[string][]Set `yaml:"sets"`
+	BeginningSchedule time.Time        `yaml:"-" json:"beginningSchedule"`
+	Rooms             []string         `yaml:"rooms" json:"rooms"`
+	Sets              map[string][]Set `yaml:"sets" json:"sets"`
 }
 
 func WriteConfigToFile(config Config, fileName string) error {
@@ -121,7 +121,7 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 		c.LogFile = v.GetString("secrets.logFile")
 	}
 
-	c.TelegramDeleteLeftTheGroupMessages = v.GetBool("public.telegramDeleteLeftTheGroupMessages")
+	c.TelegramDeleteLeftTheGroupMessages = v.GetBool("telegramDeleteLeftTheGroupMessages")
 
 	c.Buttons = v.GetStringSlice("buttons")
 

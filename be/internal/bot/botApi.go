@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shallowBunny/app/be/internal/bot/config"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp"
+	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
 
 	"github.com/rs/zerolog/log"
 )
@@ -95,6 +96,58 @@ func (b Bot) GetLineUp(c *gin.Context) {
 	response.Meta.Rooms = b.RootLineUp.Rooms
 	b.Log(0, c.Request.UserAgent(), ip)
 	c.JSON(http.StatusOK, response)
+}
+
+func convertLineupToInputCommandResultSets(lineup config.Lineup) []inputs.InputCommandResultSet {
+	var results []inputs.InputCommandResultSet
+
+	for room, sets := range lineup.Sets {
+		for _, set := range sets {
+			result := inputs.InputCommandResultSet{
+				Room:     room,
+				Dj:       set.Dj,
+				Day:      set.Day,
+				Hour:     set.Hour,
+				Minute:   set.Minute,
+				Duration: set.Duration,
+			}
+			results = append(results, result)
+		}
+	}
+	return results
+}
+
+func (b *Bot) UpdateLineUp(c *gin.Context) {
+	var lineup config.Lineup
+
+	// Bind the JSON body to the Lineup struct
+	if err := c.ShouldBindJSON(&lineup); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Process the lineup data here (e.g., update your configuration, save to a database, etc.)
+	log.Printf("Received Lineup: %+v\n", lineup)
+
+	mr := NewMergeRequest(lineup.BeginningSchedule, convertLineupToInputCommandResultSets(lineup), 0, "api", getClientIPByRequest(c.Request))
+
+	err := b.ChecForDuplicateMergeRequest(mr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err = b.CheckMergeRequest(mr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	b.CreateMergeRequest(*mr)
+
+	// Respond to the client
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Created MR %v with changes", mr.ID),
+	})
 }
 
 type RestartRequest struct {

@@ -1,17 +1,23 @@
 package bot
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/shallowBunny/app/be/internal/bot/config"
 	DaoDb "github.com/shallowBunny/app/be/internal/bot/dao/daoDb"
 	DaoMem "github.com/shallowBunny/app/be/internal/bot/dao/daoMem"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
+	"github.com/tj/assert"
 )
 
 type test struct {
@@ -380,4 +386,77 @@ func TestInputMultipleMergeAndRebase(t *testing.T) {
 		}
 	}
 
+}
+
+func TestUpdateLineUp(t *testing.T) {
+
+	return
+	// Create a new Gin router for testing
+	router := gin.Default()
+
+	// Create an instance of your Bot struct
+	c, err := config.New("../../configs/bot_test.yaml", false)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	tt := time.Now()
+
+	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
+	c.Lineup.BeginningSchedule = currentTime
+
+	bot := New(DaoMem.New(), c)
+	bot.channel = nil
+
+	// Register the UpdateLineUp handler with the router
+	router.PUT("/update-lineup", bot.UpdateLineUp)
+
+	// Create a sample Lineup payload
+	lineup := config.Lineup{
+		Rooms: []string{
+			"⌛ Zeitmaschine",
+			"🌾 Mühle",
+			"🏎 Turbo Tüff",
+			"🚕 Furore",
+			"🚚 Rave Rikscha",
+			"🤡 Jesterfield",
+		},
+		Sets: map[string][]config.Set{
+			"⌛ Zeitmaschine": {
+				{
+					Day:      1,
+					Duration: 120,
+					Dj:       "DJ Awesome",
+					Hour:     22,
+					Minute:   30,
+				},
+			},
+		},
+	}
+
+	// Convert the Lineup struct to JSON
+	jsonPayload, err := json.Marshal(lineup)
+	if err != nil {
+		t.Fatalf("Failed to marshal lineup: %v", err)
+	}
+
+	// Create a new HTTP request with the JSON payload
+	req, err := http.NewRequest(http.MethodPut, "/update-lineup", bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Create a ResponseRecorder to capture the response
+	w := httptest.NewRecorder()
+
+	// Perform the request
+	router.ServeHTTP(w, req)
+
+	// Check if the status code is 200 OK
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	// Check the response body
+	expectedResponse := `{"message":"Lineup updated successfully"}`
+	assert.JSONEq(t, expectedResponse, w.Body.String())
 }

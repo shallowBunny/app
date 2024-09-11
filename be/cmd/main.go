@@ -40,6 +40,8 @@ func createServer(b *bot.Bot) *http.Server {
 
 	r.GET("/api", b.GetLineUp)
 	r.POST("/api", b.TokenAuthMiddleware(), b.Restart)
+	r.PUT("/api", b.TokenAuthMiddleware(), b.UpdateLineUp)
+
 	r.GET("/manifest", b.GetManifest)
 	r.GET("/manifest.webmanifest", b.GetManifest)
 
@@ -145,13 +147,13 @@ func main() {
 
 	log.Info().Msg("using config " + config.LogFile)
 
-	apiToken := config.TelegramToken
+	telegramToken := config.TelegramToken
 
 	if isLocalhostTesting() {
 		log.Debug().Msg("isLocalhostTesting is true: using env SHALLOWBUNNY_TELEGRAM_API_TOKEN and port 8082")
 		envToken := os.Getenv("SHALLOWBUNNY_TELEGRAM_API_TOKEN")
 		if envToken != "" {
-			apiToken = envToken
+			telegramToken = envToken
 		}
 		config.Port = 8082
 	}
@@ -166,7 +168,7 @@ func main() {
 			Password: "", // no password set
 			DB:       0,  // use default DB
 		})
-		dao = DaoDb.New(apiToken, redisclient)
+		dao = DaoDb.New(telegramToken, redisclient)
 	}
 
 	bot := bot.New(dao, config)
@@ -180,6 +182,7 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 
 		var server *http.Server
+		quitTelegram := make(chan struct{})
 
 		if config.Port != 0 {
 			log.Info().Msg("starting rest api")
@@ -193,12 +196,16 @@ func main() {
 			log.Info().Msg("skipping rest api")
 		}
 
-		if apiToken != "" {
+		if telegramToken != "" {
 			log.Info().Msg("starting telegram bot")
-			telegram := telegram.New(apiToken, bot)
+			telegram := telegram.New(telegramToken, bot)
 			go func() {
 
 				restartMsg := fmt.Sprintf("✅ Restarted using %v key: %v", *configFileArg, dao.GetKey())
+
+				if config.TelegramDeleteLeftTheGroupMessages {
+					restartMsg += "\n✅ TelegramDeleteLeftTheGroupMessages Activated"
+				}
 
 				if restartScriptError != nil {
 					restartMsg += "\n⚠️ " + restartScriptError.Error() + "\n"
@@ -211,12 +218,12 @@ func main() {
 				bot.SendAdminsMessage(restartMsg)
 				bot.Log(0, restartMsg, "")
 			}()
-			go telegram.Listen()
+			go telegram.Listen(quitTelegram)
 		} else {
 			log.Info().Msg("no telegram token. skipping telegram")
 		}
 
-		if apiToken != "" || server != nil {
+		if telegramToken != "" || server != nil {
 			// Create a channel to listen for termination signals
 			quit := make(chan os.Signal, 1)
 
@@ -235,6 +242,10 @@ func main() {
 				if err := server.Shutdown(ctx); err != nil {
 					log.Error().Msg(fmt.Sprintf("Rest api to shutdown:%v", err))
 				}
+			}
+
+			if telegramToken != "" {
+				close(quitTelegram)
 			}
 		}
 		log.Info().Msg("Server exiting")

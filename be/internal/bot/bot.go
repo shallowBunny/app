@@ -3,6 +3,7 @@ package bot
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -37,6 +38,7 @@ const (
 	helpCommand               = "Help"
 	maxMnbRoomsForRoomButton  = 100
 	maxSize                   = 4096
+	noMotdMessage             = "No help available"
 )
 
 var (
@@ -44,11 +46,13 @@ var (
 )
 
 type MergeRequests struct {
-	Changes []inputs.InputCommandResultSet
-	UserId  int64
-	User    string
-	T       time.Time
-	ID      int
+	Changes           []inputs.InputCommandResultSet
+	UserId            int64
+	User              string
+	Created           time.Time
+	ID                int
+	Info              string
+	BeginningSchedule time.Time
 }
 
 type Bot struct {
@@ -350,6 +354,8 @@ func (b Bot) SendModosMessage(input string) {
 		b.sendMessage(int64(v), msg)
 	}
 	log.Info().Msg(msg)
+	log.Info().Msg(fmt.Sprintf("send to %v", b.modos))
+
 }
 
 func (b Bot) sendMessage(userId int64, msg string) {
@@ -473,45 +479,122 @@ func (b Bot) PrintLineupForCheckConfig() string {
 	for _, v := range b.RootLineUp.Rooms {
 		res += b.RootLineUp.PrintForMerge(v)
 	}
-	res += "\nGAPS:\n\n"
-
-	res += b.RootLineUp.Hole()
 	return res
 }
 
-func compareLineUps(a, b *lineUp.LineUp) string {
+func compareLineUps(a, b *lineUp.LineUp) (string, error) {
+
+	log.Debug().Msg("*** compareLineUps")
 
 	dmp := diffmatchpatch.New()
-
+	var err error
 	res := ""
+	changed := false
 
+	// Create a map to ensure we process each room only once
+	roomsMap := make(map[string]bool)
+
+	// Add all rooms from a to the map
 	for _, v := range a.Rooms {
-		f := a.PrintForMerge(v)
-		f2 := b.PrintForMerge(v)
+		roomsMap[v] = true
+	}
+
+	// Add all rooms from b to the map
+	for _, v := range b.Rooms {
+		roomsMap[v] = true
+	}
+
+	for room := range roomsMap {
+		f := a.PrintForMerge(room)
+		log.Debug().Msg(fmt.Sprintf("1/ compareLineUps: <%v:%v> ", f, room))
+
+		f2 := b.PrintForMerge(room)
+		log.Debug().Msg(fmt.Sprintf("2/ compareLineUps: <%v:%v> ", f2, room))
+
 		if f == f2 {
+			log.Debug().Msg("same")
 			continue
 		}
+		log.Debug().Msg("diff")
+
+		changed = true
 		fileAdmp, fileBdmp, dmpStrings := dmp.DiffLinesToChars(f, f2)
 		diffs := dmp.DiffMain(fileAdmp, fileBdmp, false)
 		diffs = dmp.DiffCharsToLines(diffs, dmpStrings)
 		diffs = dmp.DiffCleanupSemantic(diffs)
-
-		//diffs := dmp.DiffMain(f, f2, false)
-
 		res += dmp.DiffPrettyText(diffs)
-
-		//res += f
 	}
+	if !changed {
+		err = errors.New("No change with current lineup")
+	}
+	log.Debug().Msg("end")
 
-	log.Debug().Msg(fmt.Sprintf("compareLineUps: <%v> <%v> -> <%v>", a.Dump(), b.Dump(), res))
+	log.Debug().Msg(fmt.Sprintf("compareLineUps: <%v> <%v> -> <%v> err:<%v>", a.Dump(), b.Dump(), res, err))
 
-	return res
+	return res, err
 }
 
 func (b *Bot) ProcessCommand(chatId int64, text, user string) []Message {
 	command, arg := b.parseCommand(chatId, text)
 	log.Debug().Msg(fmt.Sprintf("%v sent <%v> command <%v> arg <%v>", user, text, command, arg))
 	return b.runCommand(chatId, command, arg, text, user)
+}
+
+func NewMergeRequest(beginningSchedule time.Time, changes []inputs.InputCommandResultSet, chatId int64, user string, answer string) *MergeRequests {
+	mr := MergeRequests{
+		Changes:           changes,
+		UserId:            chatId,
+		User:              user,
+		Created:           time.Now(),
+		ID:                mergeRequestID,
+		Info:              answer,
+		BeginningSchedule: beginningSchedule,
+	}
+	mergeRequestID++
+	return &mr
+}
+
+func (b *Bot) CreateMergeRequest(mr MergeRequests) {
+	b.UsersMergeRequest = append(b.UsersMergeRequest, mr)
+	modoMsg := fmt.Sprintf("new merge request #%d from %v, use /rebase command to merge\n%v", mr.ID, mr.User, mr.Info)
+	log.Debug().Msg(fmt.Sprintf("new merge request from %v <%v>", mr.User, mr))
+	log.Debug().Msg(modoMsg)
+	b.SendModosMessage(modoMsg)
+}
+
+func (b Bot) ChecForDuplicateMergeRequest(r *MergeRequests) error {
+	for _, mr := range b.UsersMergeRequest {
+		if len(mr.Changes) == len(r.Changes) {
+			foundDifference := false
+			for i := range mr.Changes {
+				if mr.Changes[i] != r.Changes[i] {
+					foundDifference = true
+					continue
+				}
+			}
+			if !foundDifference {
+				return errors.New("Similar MR exists")
+			}
+		}
+	}
+	return nil
+}
+
+func (b Bot) CheckMergeRequest(r *MergeRequests) (string, error) {
+	var answer string
+	var err error
+
+	l := b.RootLineUp.DuplicateLineUp()
+	answer += fmt.Sprintf("Merge request %d from %v (submitted %v)\n\n", r.ID, r.User, r.Created.Format("Mon 15:04"))
+	for _, v := range r.Changes {
+		s := l.NewSet(v.Dj, v.Room, v.Day, v.Hour, v.Minute, v.Duration, 0)
+		log.Debug().Msg("added " + l.PrintSet(s) + "\n")
+		log.Debug().Msg(l.AddSet(s))
+	}
+	compare, err := compareLineUps(b.RootLineUp, l)
+	answer += compare
+	log.Debug().Msg(fmt.Sprintf("compare:<%v>", compare))
+	return answer, err
 }
 
 func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) []Message {
@@ -525,16 +608,17 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 
 	if !b.users.DoesUserExists(chatId) {
 		log.Info().Msg("new user")
-		messages = append(messages, Message{
-			Text:    b.config.BotMotd,
-			Buttons: nil,
-			UserID:  chatId,
-			Html:    true,
-		})
+		if b.config.BotMotd != "" {
+			messages = append(messages, Message{
+				Text:    b.config.BotMotd,
+				Buttons: nil,
+				UserID:  chatId,
+				Html:    true,
+			})
+		}
 	}
 
 	var adminMsg string
-	var modoMsg string
 	var html bool
 
 	log.Debug().Msg(fmt.Sprintf("command <%v> <%v>", command, stopNotificationsCommand))
@@ -546,9 +630,13 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 			log.Error().Msg(err.Error())
 		}
 		answer += lineUp.PrintCurrent()
-	case "help":
-		answer = b.config.BotMotd + "\n\n"
-		html = true
+	case strings.ToLower(helpCommand):
+		if b.config.BotMotd == "" {
+			answer = noMotdMessage
+		} else {
+			answer = b.config.BotMotd + "\n\n"
+			html = true
+		}
 	case "stop", stopNotificationsCommand:
 		err := b.users.SetNotificationsUser(chatId, false)
 		if err != nil {
@@ -581,10 +669,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 		}
 	case "print":
 		if b.IsAdmin(chatId) {
-			answer = ""
-			for _, v := range lineUp.Rooms {
-				answer += lineUp.PrintForMerge(v)
-			}
+			answer = b.PrintLineupForCheckConfig()
 		} else {
 			answer = b.defaultCommand(orig, lineUp, chatId)
 		}
@@ -613,15 +698,11 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 				switch lineUp.CurrentInputCommand(chatId) {
 				case "":
 
-					l := b.RootLineUp.DuplicateLineUp()
-					r := b.UsersMergeRequest[0]
-					answer += fmt.Sprintf("Merge request %d from %v (submitted %v)\n\n", r.ID, r.User, r.T.Format("Mon 15:04"))
-					for _, v := range r.Changes {
-						s := l.NewSet(v.Dj, v.Room, v.Day, v.Hour, v.Minute, v.Duration, 0)
-						log.Debug().Msg("added " + l.PrintSet(s) + "\n")
-						log.Debug().Msg(l.AddSet(s))
+					a, err := b.CheckMergeRequest(&b.UsersMergeRequest[0])
+					if err != nil {
+						log.Error().Msg(fmt.Sprintf("CheckMergeRequest %v", err.Error()))
 					}
-					answer += compareLineUps(b.RootLineUp, l)
+					answer += a
 					html = true
 					newLineup, inputCommandResult := lineUp.InputCommand(chatId, arg)
 					if newLineup != lineUp {
@@ -673,7 +754,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 				if lineUp != b.RootLineUp {
 
 					html = true
-					answer = compareLineUps(b.RootLineUp, lineUp)
+					answer, _ = compareLineUps(b.RootLineUp, lineUp)
 					log.Debug().Msg(answer)
 					newLineup, inputCommandResult := lineUp.InputCommand(chatId, arg)
 					if newLineup != lineUp {
@@ -695,23 +776,12 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 				switch inputCommandResult.Answer {
 				// reponse a merge
 				case inputs.MergeSubmitMessage:
-					mr := MergeRequests{
-						Changes: newLineup.Changes,
-						UserId:  chatId,
-						User:    user,
-						T:       time.Now(),
-						ID:      mergeRequestID,
-					}
-					mergeRequestID++
-					b.UsersMergeRequest = append(b.UsersMergeRequest, mr)
-
-					modoMsg = fmt.Sprintf("new merge request #%d from %v, use /rebase command to merge\n%v", mr.ID, user, answer)
+					mr := NewMergeRequest(b.RootLineUp.StartTime, newLineup.Changes, chatId, user, answer)
+					b.CreateMergeRequest(*mr)
 					delete(b.UsersLineUps, chatId)
-					log.Debug().Msg(fmt.Sprintf("new merge request from %v <%v>", user, mr))
 					lineUp = b.RootLineUp
-					log.Debug().Msg(modoMsg)
-
 					answer += fmt.Sprintf(" (#%d)", mr.ID)
+
 				case inputs.MergeDeleteMessage:
 					delete(b.UsersLineUps, chatId)
 					lineUp = b.RootLineUp
@@ -765,10 +835,6 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 
 	if adminMsg != "" {
 		b.SendAdminsMessage(adminMsg)
-	}
-
-	if modoMsg != "" {
-		b.SendModosMessage(modoMsg)
 	}
 
 	if len(buttons) == 0 {

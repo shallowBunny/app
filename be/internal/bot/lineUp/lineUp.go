@@ -110,7 +110,6 @@ func New(config *config.Config) *LineUp {
 
 		sets, ok := config.Lineup.Sets[room]
 		if !ok {
-
 			log.Error().Msg(fmt.Sprintf("missing room <%v>", room))
 			continue
 		}
@@ -122,6 +121,17 @@ func New(config *config.Config) *LineUp {
 			}
 		}
 	}
+	emptyDurations := false
+	for _, s := range lineUp.Sets {
+		if s.End == s.Start {
+			log.Error().Msg(fmt.Sprintf("empty duration for %v (%v)", s.Dj, s.Room))
+			emptyDurations = true
+		}
+	}
+	if emptyDurations {
+		panic("empty durations")
+	}
+
 	return lineUp
 }
 
@@ -334,6 +344,16 @@ func (l *LineUp) FindDJ(i string, when time.Time) string {
 
 func (l *LineUp) AddSet(s Set) string {
 
+	roomKnown := false
+	for _, v := range l.Rooms {
+		if v == s.Room {
+			roomKnown = true
+		}
+	}
+	if !roomKnown {
+		l.Rooms = append(l.Rooms, s.Room)
+	}
+
 	resSet := []Set{}
 
 	msg := ""
@@ -344,6 +364,12 @@ func (l *LineUp) AddSet(s Set) string {
 		if v.End.After(s.Start) && v.Start.Before(s.End) && v.Room == s.Room {
 			skip = true
 		}
+
+		if v.End == v.Start {
+			log.Trace().Msg(fmt.Sprintf("empty duration for %v", v.Dj))
+			v.End = s.Start
+		}
+
 		if !skip {
 			resSet = append(resSet, v)
 		} else {
@@ -406,7 +432,7 @@ func sameDay(date1, date2 time.Time) bool {
 		date1.Day() == date2.Day()
 }
 
-func printRoom(sets []Set, input bool, oldData bool, oldLineupMessage string, currentTime time.Time, youAre string, filterNomSalle string) string {
+func printRoom(sets []Set, oldData bool, oldLineupMessage string, currentTime time.Time, youAre string, filterNomSalle string) string {
 	var res string
 	var closingTime time.Time
 
@@ -503,13 +529,17 @@ func (l LineUp) PrintForMerge(filterNomSalle string) string {
 
 	res += "\n" + filterNomSalle + ":\n\n"
 
+	var lastClosing time.Time
+
 	for _, v := range s {
-		res += v.Start.Format("Mon") + " " + printTime(v.Start) + " to " + printTime(v.End) + " " + v.Dj
-		if filterNomSalle == "" {
-			res += " " + v.Room
+
+		if !lastClosing.IsZero() && v.Start != lastClosing {
+			res += printTimeWithDay(lastClosing) + " to " + printTime(v.Start) + " ⏸️\n"
 		}
+		res += v.Start.Format("Mon") + " " + printTime(v.Start) + " to " + printTime(v.End) + " " + v.Dj
 		res += "\n"
 
+		lastClosing = v.End
 	}
 	return res
 }
@@ -549,7 +579,7 @@ func (l LineUp) Print(youAreHere string, filter int, filterNomSalle string) stri
 		res += noData
 		return res
 	}
-	return res + printRoom(s, l.Input, oldData, oldLineupMessage, current, youAreHere, filterNomSalle)
+	return res + printRoom(s, oldData, oldLineupMessage, current, youAreHere, filterNomSalle)
 }
 
 func (l LineUp) getDayNumber(t time.Time) int {
@@ -638,7 +668,7 @@ func (l LineUp) Hole() string {
 			res += room + " gap: " + printTimeWithDay(lastClosing) + " to " + printTimeWithDay(v.Start) + " (" + lastDJ + " -> " + v.Dj + ")\n"
 		}
 		if !lastClosing.IsZero() && v.Start.Before(lastClosing) {
-			res += "# wrong data? " + lastClosing.String() + " to " + v.Start.String() + "\n"
+			res += room + " " + v.Dj + "🚫 wrong data? " + lastClosing.String() + " to " + v.Start.String() + "\n"
 		}
 		lastClosing = v.End
 		lastDJ = v.Dj

@@ -24,17 +24,6 @@ var (
 	roomSonn = "🌞 Sonnendeck"
 
 	rooms = []string{roomA, roomTurm, roomTanz, roomSonn}
-
-	roomSchedule2 = map[string][]string{
-		roomA:    {"0 23:00 120 0 MADmoiselle"},
-		roomTurm: {"3 02:00 120 1 Animal Trainer"},
-		roomTanz: {"2 03:00 120 1 Ava Irandoost"},
-		roomSonn: {"4 18:00 120 1 Bassphilia"},
-	}
-
-	roomSchedule = map[string][]string{
-		roomA: {"0 23:00 120 0 MADmoiselle"},
-	}
 )
 
 func TestLineUpInput(t *testing.T) {
@@ -49,7 +38,7 @@ func TestLineUpInput(t *testing.T) {
 			BeginningSchedule: startTime,
 			Rooms:             rooms,
 			Sets: map[string][]config.Set{
-				"roomA": []config.Set{
+				"roomA": {
 					config.Set{Day: 0,
 						Hour:     23,
 						Minute:   00,
@@ -147,9 +136,6 @@ func TestLineUpInput(t *testing.T) {
 }
 
 func TestFindRoom(t *testing.T) {
-	roomSchedule = map[string][]string{
-		roomA: {"0 23:00 120 0 MADmoiselle", "0 23:00 120 0 Mad max"},
-	}
 	startTime := time.Now().Add(time.Hour)
 
 	config := &config.Config{
@@ -157,7 +143,7 @@ func TestFindRoom(t *testing.T) {
 			BeginningSchedule: startTime,
 			Rooms:             rooms,
 			Sets: map[string][]config.Set{
-				"roomA": []config.Set{
+				"roomA": {
 					config.Set{Day: 0,
 						Hour:     23,
 						Minute:   00,
@@ -165,7 +151,7 @@ func TestFindRoom(t *testing.T) {
 						Dj:       "MADmoiselle",
 					},
 				},
-				"roomTurm": []config.Set{
+				"roomTurm": {
 					config.Set{Day: 3,
 						Hour:     02,
 						Minute:   00,
@@ -173,7 +159,7 @@ func TestFindRoom(t *testing.T) {
 						Dj:       "Animal Trainer",
 					},
 				},
-				"roomTanz": []config.Set{
+				"roomTanz": {
 					config.Set{Day: 2,
 						Hour:     3,
 						Minute:   00,
@@ -213,9 +199,6 @@ func TestFindRoom(t *testing.T) {
 }
 
 func TestFindDJ(t *testing.T) {
-	roomSchedule = map[string][]string{
-		roomA: {"3 18:00 60 0 Robyn Schulkowsky & Gebrüder Teichmann"},
-	}
 	startTime := time.Now().Add(time.Hour)
 
 	config := &config.Config{

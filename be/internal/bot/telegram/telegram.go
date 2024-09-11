@@ -127,95 +127,79 @@ func (t Telegram) SendMessages() {
 	}
 }
 
-func (t Telegram) Listen() {
-
+func (t Telegram) Listen(quit <-chan struct{}) {
+	// Start the goroutine to send messages
 	go t.SendMessages()
 
-	//bot := New(apiToken, redisclient)
+	for {
+		// Telegram polling configuration
+		updateConfig := tgbotapi.NewUpdate(0)
+		updateConfig.Timeout = 30
 
-	// Create a new UpdateConfig struct with an offset of 0. Offsets are used
-	// to make sure Telegram knows we've handled previous values and we don't
-	// need them repeated.
-	updateConfig := tgbotapi.NewUpdate(0)
+		// Get the updates channel from Telegram
+		updates := t.api.GetUpdatesChan(updateConfig)
+		restartListener := false
+		for !restartListener {
 
-	// Tell Telegram we should wait up to 30 seconds on each request for an
-	// update. This way we can get information just as quickly as making many
-	// frequent requests without having to send nearly as many.
-	updateConfig.Timeout = 30
-
-	// Start polling Telegram for updates.
-	updates := t.api.GetUpdatesChan(updateConfig)
-
-	// Let's go through each update that we're getting from Telegram.
-	for update := range updates {
-
-		// Telegram can send many types of updates depending on what your Bot
-		// is up to. We only want to look at messages for now, so we can
-		// discard any other updates.
-
-		if update.Message == nil {
-			log.Debug().Msg("update. update.Message == nil ...")
-			continue
-		}
-
-		if t.bot.GetConfig().TelegramDeleteLeftTheGroupMessages {
-			if update.Message.LeftChatMember != nil {
-				log.Debug().Msg("deleting message")
-				deleteMsg := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, update.Message.MessageID)
-				if _, err := t.api.Send(deleteMsg); err != nil {
-					log.Error().Msg(fmt.Sprintf("Failed to delete message: %v", err))
-				}
-			}
-			continue
-		}
-
-		if update.Message.Chat.IsGroup() || update.Message.Chat.IsChannel() {
-			log.Debug().Msg("update.Message.Chat.Type = group")
-			userString := getUsername(update)
-			group := update.Message.Chat.Title
-			t.bot.GroupChange(update.Message.Chat.ID, userString, group)
-			continue
-		}
-
-		// Now that we know we've gotten a new message, we can construct a
-		// reply! We'll take the Chat ID and Text from the incoming message
-		// and use it to create a new message.
-
-		//PrintForTime(sets, teleportTimeString)
-		//update.Message.Text
-		var msg tgbotapi.MessageConfig
-
-		if update.Message.Chat.ID > 0 { // to skip joins in channels
-			messages := t.bot.ProcessCommand(update.Message.Chat.ID, update.Message.Text, getUsername(update))
-
-			for i, answer := range messages {
-
-				if len(answer.Text) > 4096 {
-					log.Error().Msg("had to trim inside!!?")
-					answer.Text = bot.Trim(answer.Text)
+			select {
+			case update, ok := <-updates:
+				if !ok {
+					log.Warn().Msg("Updates channel closed, restarting down Telegram listener.")
+					restartListener = true
+					break
 				}
 
-				msg = messageToMessageConfig(answer)
-
-				t.bot.Log(update.Message.Chat.ID, update.Message.Text, getUsername(update))
-
-				// We'll also say that this message is a reply to the previous message.
-				// For any other specifications than Chat ID or Text, you'll need to
-				// set fields on the `MessageConfig`.
-
-				if i == 0 {
-					msg.ReplyToMessageID = update.Message.MessageID
+				// Process the update if it's a valid message
+				if update.Message == nil {
+					log.Debug().Msg("update. update.Message == nil ...")
+					continue
 				}
 
-				// Okay, we're sending our message off! We don't care about the message
-				// we just sent, so we'll discard it.
-				if _, err := t.api.Send(msg); err != nil {
-					// Note that panics are a bad way to handle errors. Telegram can
-					// have service outages or network errors, you should retry sending
-					// messages or more gracefully handle failures.
-					log.Error().Msg(fmt.Sprintf("%v %v", err.Error(), msg))
+				if t.bot.GetConfig().TelegramDeleteLeftTheGroupMessages {
+					if update.Message.LeftChatMember != nil {
+						log.Debug().Msg("deleting message")
+						deleteMsg := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, update.Message.MessageID)
+						if _, err := t.api.Send(deleteMsg); err != nil {
+							log.Error().Msg(fmt.Sprintf("Failed to delete message: %v", err))
+						}
+						continue
+					}
 				}
+
+				if update.Message.Chat.IsGroup() || update.Message.Chat.IsChannel() {
+					log.Debug().Msg("update.Message.Chat.Type = group")
+					userString := getUsername(update)
+					group := update.Message.Chat.Title
+					t.bot.GroupChange(update.Message.Chat.ID, userString, group)
+					continue
+				}
+
+				var msg tgbotapi.MessageConfig
+				if update.Message.Chat.ID > 0 { // Skip joins in channels
+					messages := t.bot.ProcessCommand(update.Message.Chat.ID, update.Message.Text, getUsername(update))
+					for i, answer := range messages {
+						if len(answer.Text) > 4096 {
+							log.Error().Msg("Had to trim inside!!?")
+							answer.Text = bot.Trim(answer.Text)
+						}
+						msg = messageToMessageConfig(answer)
+						t.bot.Log(update.Message.Chat.ID, update.Message.Text, getUsername(update))
+
+						if i == 0 {
+							msg.ReplyToMessageID = update.Message.MessageID
+						}
+
+						if _, err := t.api.Send(msg); err != nil {
+							log.Error().Msg(fmt.Sprintf("%v %v", err.Error(), msg))
+						}
+					}
+				}
+
+			case <-quit: // Listen for quit signal
+				log.Info().Msg("Shutting down Telegram listener gracefully")
+				return
 			}
 		}
+		log.Warn().Msg("Restarting Telegram listener")
 	}
 }
