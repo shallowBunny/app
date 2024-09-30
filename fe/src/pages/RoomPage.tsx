@@ -5,7 +5,7 @@ import { FunctionComponent } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import Room from "@/components/ui/Room";
 import clsx from "clsx";
-import { Data } from "../lib/types";
+import { Data, Like } from "../lib/types"; // Import the Like type
 import { extractEmoticons } from "../lib/emoji"; // Import the function
 import Search from "@/components/ui/Search"; // Import the Search component
 
@@ -14,7 +14,8 @@ interface RoomPageProps {
 	isStandalone: boolean;
 	currentMinute: Date; // Add the currentMinute prop
 	selectedRoom: string; // Add selectedRoom prop
-	setSelectedRoom: (room: string) => void; // Add setSelectedRoom prop
+	setSelectedRoom: (room: string) => void; // Add setSelectedRoom as a prop
+	likedDJs: Like[]; // Update likedDJs to be a list of Like objects
 }
 
 const RoomPage: FunctionComponent<RoomPageProps> = ({
@@ -23,6 +24,7 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 	currentMinute,
 	selectedRoom,
 	setSelectedRoom,
+	likedDJs,
 }) => {
 	if (!data || !data.sets) {
 		return (
@@ -111,6 +113,7 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 											(set) => set.room === room && set.dj !== "?"
 										)}
 										currentMinute={currentMinute}
+										likedDJs={likedDJs} // Pass likedDJs as a prop
 									/>
 									<div className="h-20"></div>
 								</div>
@@ -123,7 +126,7 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 						value="search"
 					>
 						<div className="absolute top-5">
-							<Search sets={data.sets} />
+							<Search sets={data.sets} likedDJs={likedDJs} />
 						</div>
 					</Tabs.Content>
 				</Tabs.Root>

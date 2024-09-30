@@ -83,7 +83,7 @@ func New(config *config.Config) *LineUp {
 
 	startTime := config.Lineup.BeginningSchedule
 	nbDaysForInput := config.NbDaysForInput
-	input := config.Input
+	input := config.ReadSetsFromRedisOnRestart
 	oldLineupMessage := config.BotOldLineupMessage
 	NowSkipClosed := config.NowSkipClosed
 
@@ -133,6 +133,44 @@ func New(config *config.Config) *LineUp {
 	}
 
 	return lineUp
+}
+
+func (l LineUp) GetSetsAndDurations() string {
+	roomData := make(map[string]struct {
+		setCount  int
+		totalMins int
+	})
+	totalSets := 0
+	totalDuration := 0
+	var result strings.Builder
+
+	// Loop through each set to count sets and calculate total duration for each room
+	for _, set := range l.Sets {
+		duration := int(set.End.Sub(set.Start).Minutes())
+		if data, exists := roomData[set.Room]; exists {
+			data.setCount++
+			data.totalMins += duration
+			roomData[set.Room] = data
+		} else {
+			roomData[set.Room] = struct {
+				setCount  int
+				totalMins int
+			}{1, duration}
+		}
+		totalSets++
+		totalDuration += duration
+	}
+
+	// Add the results for each room to the result string
+	for room, data := range roomData {
+		result.WriteString(fmt.Sprintf("Room: %s, Number of sets: %d, Total duration: %d minutes\n", room, data.setCount, data.totalMins))
+	}
+
+	// Add the total number of sets and total duration across all rooms
+	result.WriteString(fmt.Sprintf("Total number of sets: %d\n", totalSets))
+	result.WriteString(fmt.Sprintf("Total duration across all rooms: %d minutes\n", totalDuration))
+
+	return result.String()
 }
 
 func (l *LineUp) Events(t time.Time) string {

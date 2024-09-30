@@ -1,5 +1,5 @@
 // utils.ts
-import { Set, RoomSets, RoomSituation } from "./types";
+import { Set, RoomSets, Meta, Like, RoomSituation } from "./types";
 import clsx from "clsx";
 
 export function findCurrentAndNextSets(
@@ -87,14 +87,18 @@ const formatTimeForClosedStages = (date: Date): string => {
 
 export function convertRoomSetsToRoomSituation(
 	roomSets: Record<string, RoomSets>,
-	allRooms: string[]
+	meta: Meta // Use Meta instead of allRooms
 ): RoomSituation[] {
-	// Start with an array of RoomSituation with all rooms set to "⚠️ no data"
-	const roomSituations: RoomSituation[] = allRooms.map((room) => {
+	// Extract the list of all rooms from meta
+	const allRooms = meta.rooms;
+
+	// Start with an array of RoomSituation with all rooms set to "⚠️ no data" and marked as closed
+	const roomSituations: RoomSituation[] = allRooms.map((room: string) => {
 		const sets = roomSets[room];
 		return {
 			room,
 			situation: sets ? `${room} 🚫 closed` : `${room} ⚠️ no data`,
+			closed: true, // Mark the room as closed initially
 		};
 	});
 
@@ -103,6 +107,8 @@ export function convertRoomSetsToRoomSituation(
 		const sets = roomSets[room];
 
 		let situation = `${room} `;
+		let like: Like | undefined = undefined; // Initialize like as undefined
+		let closed = false;
 
 		const formatTime = (date: Date, omitWeekday: boolean = false): string => {
 			const today = new Date();
@@ -128,6 +134,14 @@ export function convertRoomSetsToRoomSituation(
 
 		if (sets?.current) {
 			situation += `✅ ${sets.current.dj}`;
+			like = {
+				dj: sets.current.dj,
+				title: meta.title, // Get title from meta
+				beginningSchedule: meta.beginningSchedule, // Get beginningSchedule from meta
+				room: sets.current.room,
+				started: sets.current.start,
+			};
+			closed = false; // The room is open if there's a current DJ
 		}
 
 		if (sets?.closing) {
@@ -137,8 +151,10 @@ export function convertRoomSetsToRoomSituation(
 			} else if (sets.next) {
 				const nextStartTime = new Date(sets.next.start);
 				situation += `🚫 closed (${sets.next.dj}${formatTimeForClosedStages(nextStartTime)})`;
+				closed = true;
 			} else {
 				situation += `🚫 closed`;
+				closed = true;
 			}
 		} else if (sets?.next) {
 			const nextStartTime = new Date(sets.next.start);
@@ -151,9 +167,15 @@ export function convertRoomSetsToRoomSituation(
 			}
 		}
 
+		// Update room situation in the roomSituations array
 		const situationIndex = roomSituations.findIndex((rs) => rs.room === room);
 		if (situationIndex !== -1) {
-			roomSituations[situationIndex]!.situation = situation;
+			roomSituations[situationIndex] = {
+				room,
+				situation,
+				like, // Assign the like structure with DJ's name, title, and beginningSchedule
+				closed, // Whether the room is closed
+			};
 		}
 	});
 

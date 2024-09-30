@@ -21,7 +21,10 @@ export async function fetchData(): Promise<Data> {
 			start: new Date(item.start),
 			end: new Date(item.end),
 		})),
-		meta: data.meta,
+		meta: {
+			...data.meta,
+			beginningSchedule: new Date(data.meta.beginningSchedule), // Ensure this is a Date object
+		},
 	} as Data;
 
 	// Store the transformed data in localStorage

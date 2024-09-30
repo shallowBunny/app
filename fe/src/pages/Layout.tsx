@@ -15,15 +15,13 @@ import BunnyIcon from "@/assets/icon-bunny.png";
 import DuckIcon from "@/assets/icon-duck.png";
 import TelegramIcon from "@/assets/icon-telegram.png";
 import TelegramBotIcon from "@/assets/icon-telegram-bot.png";
-
 import GithubIcon from "@/assets/icon-github.png";
-
 import { Now } from "@/components/ui/Now";
 import { useQuery } from "@tanstack/react-query";
 import { queryOptions } from "../lib/queryConfig";
-import { Data } from "../lib/types";
-import { allSetsInPastAndFinishedMoreThanOneHourAgo } from "../lib/setUtils"; // Import the function
-import useCurrentMinute from "../hooks/useCurrentMinute"; // Import the custom hook
+import { Data, Like } from "../lib/types";
+import { allSetsInPastAndFinishedMoreThanXHoursAgo } from "../lib/setUtils";
+import useCurrentMinute from "../hooks/useCurrentMinute";
 import { loadImageAsync } from "../lib/loadImage";
 
 // Lazy load RoomPage
@@ -38,16 +36,46 @@ const Layout: React.FC = () => {
 	const [pageTitle, setPageTitle] = useState("Lineup app"); // State for page title
 	const [appleTouchIcon, setAppleTouchIcon] = useState<string | null>(null); // State for apple-touch-icon
 	const [appleMobileWebAppTitle, setAppleMobileWebAppTitle] =
-		useState<string>("Lineup app"); // State for apple-mobile-web-app-title
+		useState<string>("Lineup app");
 	const [isStandalone, setIsStandalone] = useState<boolean>(false); // State for isStandalone
 	const [areAllSetsInPast, setAreAllSetsInPast] = useState<boolean>(false); // State to track if all sets are in the past
 	const currentMinute = useCurrentMinute(); // Use the custom hook
+
+	// Add likedDJs state
+	const [likedDJs, setLikedDJs] = useState<Like[]>([]);
+
+	// Load likedDJs from localStorage on mount
+
+	useEffect(() => {
+		const storedLikedDJs = localStorage.getItem("likedDJs");
+		if (storedLikedDJs) {
+			try {
+				const parsedLikedDJs = JSON.parse(storedLikedDJs) as Like[];
+				// Convert beginningSchedule back to a Date object
+				const likedDJsWithDates = parsedLikedDJs.map((like) => ({
+					...like,
+					beginningSchedule: new Date(like.beginningSchedule), // Convert string to Date
+					started: new Date(like.started), // Convert string to Date
+				}));
+				setLikedDJs(likedDJsWithDates);
+			} catch (e) {
+				console.error("Failed to parse likedDJs from localStorage:", e);
+			}
+		}
+	}, []);
+
+	// Save likedDJs to localStorage whenever likedDJs changes
+	useEffect(() => {
+		if (Object.keys(likedDJs).length > 0) {
+			localStorage.setItem("likedDJs", JSON.stringify(likedDJs));
+		}
+	}, [likedDJs]);
 
 	useEffect(() => {
 		const checkStandalone = () => {
 			let standalone =
 				window.matchMedia("(display-mode: standalone)").matches ||
-				(window.navigator as any).standalone === true; // Use any type assertion to bypass TypeScript error
+				(window.navigator as any).standalone === true;
 
 			const userAgent =
 				navigator.userAgent || navigator.vendor || (window as any).opera;
@@ -66,7 +94,6 @@ const Layout: React.FC = () => {
 
 	useEffect(() => {
 		if (data && data.meta && data.meta.aboutBigIcon) {
-			// Load the icon image asynchronously
 			loadImageAsync(data.meta.aboutBigIcon)
 				.then((src) => setImageSrc(src))
 				.catch((err) => console.error("Failed to load about icon image", err));
@@ -104,9 +131,8 @@ const Layout: React.FC = () => {
 			const mobileWebAppTitle = data.meta.mobileAppName || "Lineup app";
 			setAppleMobileWebAppTitle(mobileWebAppTitle);
 
-			// Check if all sets are in the past since 1 hour and we have nowTextWhenFinished set
 			const allSetsPast = !!(
-				allSetsInPastAndFinishedMoreThanOneHourAgo(data.sets) &&
+				allSetsInPastAndFinishedMoreThanXHoursAgo(data.sets, 24 * 2) &&
 				data.meta.nowTextWhenFinished &&
 				data.meta.nowTextWhenFinished.trim().length > 0
 			);
@@ -131,10 +157,16 @@ const Layout: React.FC = () => {
 	if (isLoading) return <div className="bg-[#222123] fixed inset-0"></div>;
 	if (error)
 		return (
-			<div className="bg-[#222123] fixed inset-0 text-white">
-				When you download the app to your homescreen, you need to run it once
-				with internet FIRST. then it will be able to work offline. Error:{" "}
-				{error.message}
+			<div className="bg-[#222123] fixed inset-0 flex justify-center items-center">
+				<div className="bg-[#2e2c2f] p-8 rounded-lg shadow-lg text-white max-w-lg text-center">
+					<h1 className="text-2xl font-bold mb-4">☠️</h1>
+					<p className="mb-4">{error.message}</p>
+					<p className="text-sm text-gray-300">
+						When you download the app to your homescreen, you need to run it
+						once with an internet connection. After that, it will be able to
+						work offline.
+					</p>
+				</div>
 			</div>
 		);
 	if (!data || !data.sets)
@@ -198,7 +230,8 @@ const Layout: React.FC = () => {
 								isStandalone={isStandalone}
 								currentMinute={currentMinute}
 								selectedRoom={selectedRoom}
-								setSelectedRoom={setSelectedRoom}
+								setSelectedRoom={setSelectedRoom} // Pass setSelectedRoom to RoomPage
+								likedDJs={likedDJs} // Pass likedDJs only to RoomPage
 							/>
 						</Suspense>
 					) : (
@@ -207,13 +240,13 @@ const Layout: React.FC = () => {
 							isStandalone={isStandalone}
 							allSetsInPast={areAllSetsInPast}
 							currentMinute={currentMinute}
+							likedDJs={likedDJs} // Pass likedDJs to Now
+							setLikedDJs={setLikedDJs}
 						/>
 					)}
 				</div>
 				<div
-					className={`flex mb-1 mt-2 w-full absolute ${
-						isStandalone ? "top-[90vh]" : "top-[80vh]"
-					}`}
+					className={`flex mb-1 mt-2 w-full absolute ${isStandalone ? "top-[90vh]" : "top-[80vh]"}`}
 				>
 					<Drawer>
 						<div className="flex w-full gap-1 mx-2">

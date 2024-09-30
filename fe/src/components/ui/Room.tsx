@@ -4,21 +4,21 @@ import {
 	shouldSkipYouAreHereInsertion,
 } from "@/lib/setUtils";
 
-import { Set } from "@/lib/types";
+import { Set, Like } from "@/lib/types"; // Import the Like type
 
 interface RoomProps {
 	sets: Set[];
 	room: string;
 	youarehere: string;
 	currentMinute: Date;
+	likedDJs: Like[]; // Use an array of Like objects instead of a map
 }
-/*
-shouldInsertBeforeNextDayMarker  return true,
- if we are after the beginning of the last set of current day, 
-  the current day is not the next day yet, 
-	and we are before the first set of next day
 
-*/
+// Utility function to check if a DJ is liked
+const isDjLiked = (djName: string, likedDJs: Like[]): boolean => {
+	return likedDJs.some((like) => like.dj === djName);
+};
+
 const shouldInsertBeforeNextDayMarker = (
 	youAreHereInserted: boolean,
 	currentTime: Date,
@@ -64,12 +64,11 @@ const shouldInsertBeforeNextDayMarker = (
 		currentTime.getFullYear() ===
 			new Date(lastSetOfCurrentDay.start).getFullYear();
 
-	let res =
+	return (
 		currentDayStillValid &&
 		currentTime.getTime() > lastSetEndTime &&
-		currentTime.getTime() < nextDayFirstSetTime;
-
-	return res;
+		currentTime.getTime() < nextDayFirstSetTime
+	);
 };
 
 export const isSetOngoingNow = (sets: Set[]): boolean => {
@@ -88,7 +87,7 @@ export const isSetOngoingNow = (sets: Set[]): boolean => {
 };
 
 const Room = (props: RoomProps) => {
-	const { sets, room, youarehere, currentMinute } = props;
+	const { sets, room, youarehere, currentMinute, likedDJs } = props; // Destructure likedDJs (array)
 	const groupedSets = groupSetsByDayAndTime(sets);
 
 	// Sort the days chronologically
@@ -105,14 +104,6 @@ const Room = (props: RoomProps) => {
 	const roomTag = isSetOngoingNow(sets) ? " ✅" : " 🚫";
 
 	const currentTime = new Date();
-
-	/*
-	currentTime.setDate(currentTime.getDate() - 1); // Set to yesterday
-	currentTime.setHours(23);
-	currentTime.setMinutes(33);
-	currentTime.setSeconds(0);
-	currentTime.setMilliseconds(0);
-*/
 
 	let youAreHereInserted = shouldSkipYouAreHereInsertion(sets, currentTime);
 
@@ -218,6 +209,8 @@ const Room = (props: RoomProps) => {
 													minute: "2-digit",
 												})}{" "}
 												{set.dj}
+												{/* Show heart if the DJ is liked */}
+												{isDjLiked(set.dj, likedDJs) && <span> ❤️</span>}
 											</li>
 											{index === setsForDay.length - 1 &&
 												isCurrentDay &&

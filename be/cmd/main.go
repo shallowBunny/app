@@ -215,6 +215,7 @@ func main() {
 				if restartScriptOutput != "" {
 					restartMsg += restartScriptOutput
 				}
+				restartMsg += bot.RootLineUp.GetSetsAndDurations()
 				bot.SendAdminsMessage(restartMsg)
 				bot.Log(0, restartMsg, "")
 			}()

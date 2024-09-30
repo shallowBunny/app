@@ -6,7 +6,7 @@ secrets:
   modos: [-123]
   logFile: "/dev/null"
 
-input: true
+botAllowInput: true
 meta:
   nowShowShallowBunnyAd: false
   nowShowDataSourceAd: false

@@ -27,16 +27,17 @@ export function groupSetsByDayAndTime(sets: Set[]): Record<string, Set[]> {
 	return grouped;
 }
 
-export const allSetsInPastAndFinishedMoreThanOneHourAgo = (
-	sets: Set[]
+export const allSetsInPastAndFinishedMoreThanXHoursAgo = (
+	sets: Set[],
+	hoursAgo: number
 ): boolean => {
 	if (!sets || sets.length === 0) return true;
 
-	const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+	const timeAgo = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
 
 	for (const set of sets) {
 		const setEndTime = new Date(set.end);
-		if (setEndTime >= oneHourAgo) {
+		if (setEndTime >= timeAgo) {
 			return false;
 		}
 	}

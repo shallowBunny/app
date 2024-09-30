@@ -24,15 +24,26 @@ export interface Meta {
 	rooms: string[];
 	roomYouAreHereEmoticon: string;
 	title: string;
+	beginningSchedule: Date;
 }
 
 export interface Data {
 	meta: Meta;
 	sets: Set[];
 }
+
+export interface Like {
+	dj: string;
+	title: string;
+	beginningSchedule: Date;
+	room: string;
+	started: Date;
+}
 export interface RoomSituation {
 	room: string;
 	situation: string;
+	like?: Like; // Optional because it may not always be available
+	closed: boolean; // Boolean indicating whether the room is closed
 }
 
 export interface RoomSets {

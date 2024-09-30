@@ -49,7 +49,7 @@ func TestLineUpInput(t *testing.T) {
 			},
 		},
 		NbDaysForInput: 3,
-		Input:          true,
+		BotAllowInput:  true,
 		NowSkipClosed:  false,
 	} //
 	lu := New(config)
@@ -178,7 +178,7 @@ func TestFindRoom(t *testing.T) {
 			},
 		},
 		NbDaysForInput: 3,
-		Input:          true,
+		BotAllowInput:  true,
 		NowSkipClosed:  false,
 	}
 
@@ -217,7 +217,7 @@ func TestFindDJ(t *testing.T) {
 			},
 		},
 		NbDaysForInput: 3,
-		Input:          true,
+		BotAllowInput:  true,
 		NowSkipClosed:  false,
 	}
 

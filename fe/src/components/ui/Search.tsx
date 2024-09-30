@@ -1,14 +1,16 @@
 // Search.tsx
 
 import React, { useState, useEffect, useRef } from "react";
-import { Set } from "../../lib/types";
+import { Set, Like } from "../../lib/types";
 import levenshtein from "fast-levenshtein";
+import Likes from "./Likes"; // Import the Likes component
 
 interface SearchProps {
 	sets: Set[];
+	likedDJs: Like[]; // Add this prop
 }
 
-const Search: React.FC<SearchProps> = ({ sets }) => {
+const Search: React.FC<SearchProps> = ({ sets, likedDJs }) => {
 	const [query, setQuery] = useState("");
 	const [filteredSets, setFilteredSets] = useState<Set[]>([]);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -95,7 +97,9 @@ const Search: React.FC<SearchProps> = ({ sets }) => {
 				ref={inputRef} // Set inputRef to the input element
 			/>
 			{filteredSets.length > 0 && (
-				<ul className="search-results">
+				<ul className="text-[18px] mb-4">
+					{" "}
+					{/* Added mb-4 here */}
 					{filteredSets.map((set, index) => {
 						const setTime = new Date(set.start);
 						const setDay = setTime.toLocaleDateString("en-GB", {
@@ -115,6 +119,11 @@ const Search: React.FC<SearchProps> = ({ sets }) => {
 					})}
 				</ul>
 			)}
+			<div className="mt-2">
+				{" "}
+				{/* Changed from mt-8 to mt-2 */}
+				<Likes likes={likedDJs} />
+			</div>
 		</div>
 	);
 };

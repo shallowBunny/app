@@ -15,40 +15,43 @@ import (
 )
 
 type Meta struct {
-	AboutBigIcon              string   `json:"aboutBigIcon" yaml:"aboutBigIcon"`
-	AboutShowShallowBunnyIcon bool     `json:"aboutShowShallowBunnyIcon" yaml:"aboutShowShallowBunnyIcon"`
-	AboutShowSisyDuckIcon     bool     `json:"aboutShowSisyDuckIcon" yaml:"aboutShowSisyDuckIcon"`
-	BotUrl                    string   `json:"botUrl" yaml:"botUrl"`
-	NowMapImage               string   `json:"nowMapImage" yaml:"nowMapImage"`
-	NowShowDataSourceAd       bool     `json:"nowShowDataSourceAd" yaml:"nowShowDataSourceAd"`
-	NowShowShallowBunnyAd     bool     `json:"nowShowShallowBunnyAd" yaml:"nowShowShallowBunnyAd"`
-	NowShowSisyDuckAd         bool     `json:"nowShowSisyDuckAd" yaml:"nowShowSisyDuckAd"`
-	NowSubmitPR               string   `json:"nowSubmitPR" yaml:"nowSubmitPR"`
-	NowTextAfterMap           string   `json:"nowTextAfterMap" yaml:"nowTextAfterMap"`
-	NowTextWhenFinished       string   `json:"nowTextWhenFinished" yaml:"nowTextWhenFinished"`
-	MobileAppName             string   `json:"mobileAppName" yaml:"mobileAppName"`
-	Prefix                    string   `json:"prefix" yaml:"prefix"`
-	RoomYouAreHereEmoticon    string   `json:"roomYouAreHereEmoticon" yaml:"roomYouAreHereEmoticon"`
-	Rooms                     []string `json:"rooms" yaml:"rooms"`
-	Title                     string   `json:"title" yaml:"title"`
+	AboutBigIcon              string    `json:"aboutBigIcon" yaml:"aboutBigIcon"`
+	AboutShowShallowBunnyIcon bool      `json:"aboutShowShallowBunnyIcon" yaml:"aboutShowShallowBunnyIcon"`
+	AboutShowSisyDuckIcon     bool      `json:"aboutShowSisyDuckIcon" yaml:"aboutShowSisyDuckIcon"`
+	BotUrl                    string    `json:"botUrl" yaml:"botUrl"`
+	NowMapImage               string    `json:"nowMapImage" yaml:"nowMapImage"`
+	NowShowDataSourceAd       bool      `json:"nowShowDataSourceAd" yaml:"nowShowDataSourceAd"`
+	NowShowShallowBunnyAd     bool      `json:"nowShowShallowBunnyAd" yaml:"nowShowShallowBunnyAd"`
+	NowShowSisyDuckAd         bool      `json:"nowShowSisyDuckAd" yaml:"nowShowSisyDuckAd"`
+	NowSubmitPR               string    `json:"nowSubmitPR" yaml:"nowSubmitPR"`
+	NowTextAfterMap           string    `json:"nowTextAfterMap" yaml:"nowTextAfterMap"`
+	NowTextWhenFinished       string    `json:"nowTextWhenFinished" yaml:"nowTextWhenFinished"`
+	MobileAppName             string    `json:"mobileAppName" yaml:"mobileAppName"`
+	Prefix                    string    `json:"prefix" yaml:"prefix"`
+	RoomYouAreHereEmoticon    string    `json:"roomYouAreHereEmoticon" yaml:"roomYouAreHereEmoticon"`
+	Rooms                     []string  `json:"rooms" yaml:"rooms"`
+	Title                     string    `json:"title" yaml:"title"`
+	BeginningSchedule         time.Time `json:"beginningSchedule" yaml:"-"`
 }
 
 type Config struct {
-	Meta                               Meta     `yaml:"meta"`
+	BotAllowInput                      bool     `yaml:"botAllowInput"`
 	BotMotd                            string   `yaml:"botMotd"`
 	BotOldLineupMessage                string   `yaml:"botOldLineupMessage"`
 	TelegramDeleteLeftTheGroupMessages bool     `yaml:"telegramDeleteLeftTheGroupMessages"`
-	Admins                             []int    `yaml:"admins"`
-	Modos                              []int    `yaml:"modos"`
-	TelegramToken                      string   `yaml:"telegramToken"`
-	ServerToken                        string   `yaml:"serverToken"`
+	Admins                             []int    `yaml:"secrets.admins,omitempty"`
+	Modos                              []int    `yaml:"secrets.modos,omitempty"`
+	TelegramToken                      string   `yaml:"secrets.telegramToken,omitempty"`
+	ServerToken                        string   `yaml:"secrets.serverToken,omitempty"`
 	NbDaysForInput                     int      `yaml:"nbDaysForInput"`
 	Buttons                            []string `yaml:"buttons"`
-	Input                              bool     `yaml:"input"`
-	LogFile                            string   `yaml:"logFile"`
-	CommandsHistoryLogFile             string   `yaml:"commandsHistoryLogFile"`
+	ReadSetsFromRedisOnRestart         bool     `yaml:"readSetsFromRedisOnRestart"`
+	LogFile                            string   `yaml:"secrets.logFile,omitempty"`
+	CommandsHistoryLogFile             string   `yaml:"secrets.commandsHistoryLogFile,omitempty"`
 	NowSkipClosed                      bool     `yaml:"nowSkipClosed"`
 	Port                               int      `yaml:"port"`
+	BeginningScheduleString            string   `yaml:"beginningSchedule"`
+	Meta                               Meta     `yaml:"meta"`
 	Lineup                             Lineup   `yaml:"lineup"`
 }
 
@@ -66,7 +69,7 @@ type Lineup struct {
 	Sets              map[string][]Set `yaml:"sets" json:"sets"`
 }
 
-func WriteConfigToFile(config Config, fileName string) error {
+func (config Config) WriteConfigToFile(fileName string) error {
 	file, err := os.Create(fileName)
 	if err != nil {
 		return err
@@ -140,7 +143,7 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 	if c.Meta.RoomYouAreHereEmoticon == "" {
 		errorString += "missing meta.roomYouAreHereEmoticon"
 	}
-	c.Meta.MobileAppName = v.GetString("meta.mobileAppName\n")
+	c.Meta.MobileAppName = v.GetString("meta.mobileAppName")
 	c.Meta.Prefix = v.GetString("meta.prefix")
 	if c.Meta.Prefix == "" {
 		errorString += "missing meta.prefix\n"
@@ -184,16 +187,18 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 	c.BotOldLineupMessage = v.GetString("botOldLineupMessage")
 	c.NowSkipClosed = v.GetBool("nowSkipClosed")
 
-	c.Input = v.GetBool("input")
+	c.ReadSetsFromRedisOnRestart = v.GetBool("readSetsFromRedisOnRestart")
+	c.BotAllowInput = v.GetBool("botAllowInput")
 
-	beg := v.GetString("beginningSchedule")
-	if beg == "" {
+	c.BeginningScheduleString = v.GetString("beginningSchedule")
+	if c.BeginningScheduleString == "" {
 		errorString += "Missing beginningSchedule\n"
 	} else {
-		c.Lineup.BeginningSchedule, err = dateparse.ParseLocal(beg)
+		c.Lineup.BeginningSchedule, err = dateparse.ParseLocal(c.BeginningScheduleString)
 		if err != nil {
 			errorString += err.Error()
 		}
+		c.Meta.BeginningSchedule = c.Lineup.BeginningSchedule
 	}
 
 	if errorString != "" {

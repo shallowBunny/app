@@ -159,7 +159,7 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 
 	gotBotFromDB := true
 
-	if config.Input {
+	if config.ReadSetsFromRedisOnRestart {
 		botString, err := dao.GetBot(config.Lineup.BeginningSchedule)
 		if err == nil {
 			res, err := PrettyString(botString)
@@ -232,6 +232,8 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 			log.Error().Msg(err.Error())
 		}
 	}
+
+	log.Debug().Msg(bot.RootLineUp.GetSetsAndDurations())
 
 	bot.logs, err = dao.GetLogs()
 	if err != nil {
@@ -747,7 +749,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 			answer = b.defaultCommand(orig, lineUp, chatId)
 		}
 	case inputs.MergeCommand:
-		if b.config.Input || b.IsAdmin(chatId) {
+		if b.config.BotAllowInput || b.IsAdmin(chatId) {
 
 			switch lineUp.CurrentInputCommand(chatId) {
 			case "":
@@ -797,7 +799,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 			answer = b.defaultCommand(orig, lineUp, chatId)
 		}
 	case inputs.InputCommand:
-		if b.config.Input || b.IsAdmin(chatId) {
+		if b.config.BotAllowInput || b.IsAdmin(chatId) {
 			newLineup, inputCommandResult := lineUp.InputCommand(chatId, arg)
 			if newLineup != lineUp {
 				log.Debug().Msg(fmt.Sprintf("created new lineup for user %d", chatId))
