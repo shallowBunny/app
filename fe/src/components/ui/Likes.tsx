@@ -6,24 +6,24 @@ interface LikesProps {
 }
 
 const Likes: React.FC<LikesProps> = ({ likes }) => {
+	if (likes.length === 0) {
+		return null; // Return nothing if there are no likes
+	}
+
 	return (
 		<div className="likes-container">
 			<h2 className="text-[25px] mb-3">
 				<span className="text-[18px]">❤️</span> Likes
 			</h2>
-			{likes.length === 0 ? (
-				<p className="-ml-4 pb-4">No likes yet.</p>
-			) : (
-				<ul className="text-[18px] mb-4">
-					{likes.map((like, index) => (
-						<li key={index} className="likes-items">
-							🤍 {like.dj} {like.room}
-							{like.title !== "Sisyphos" && ` - ${like.title}`} -{" "}
-							{formatDate(like.started)}
-						</li>
-					))}
-				</ul>
-			)}
+			<ul className="text-[18px] mb-4">
+				{likes.map((like, index) => (
+					<li key={index} className="likes-items">
+						🤍 {like.dj} {like.room}
+						{like.title !== "Sisyphos" && ` - ${like.title}`} -{" "}
+						{formatDate(like.started)}
+					</li>
+				))}
+			</ul>
 		</div>
 	);
 };
