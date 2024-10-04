@@ -52,12 +52,13 @@ export function getOverriddenCurrentTime(): Date {
 		return now;
 	}
 	return now;
-
+	/*	
 	// Set the time to 17:01 on the upcoming Sunday
 	const testTime = new Date();
 	testTime.setDate(testTime.getDate() + ((7 - testTime.getDay()) % 7)); // Adjust to upcoming Sunday
 	testTime.setHours(17, 1, 0, 0);
 	return testTime;
+	*/
 }
 
 const formatTimeForClosedStages = (date: Date): string => {
@@ -140,6 +141,7 @@ export function convertRoomSetsToRoomSituation(
 				beginningSchedule: meta.beginningSchedule, // Get beginningSchedule from meta
 				room: sets.current.room,
 				started: sets.current.start,
+				links: sets.current.links,
 			};
 			closed = false; // The room is open if there's a current DJ
 		}

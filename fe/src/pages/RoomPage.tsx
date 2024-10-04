@@ -34,9 +34,8 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 		);
 	}
 
-	// Sort the days chronologically
-	const rooms = data.sets.map((set) => set.room); // Map over the remaining sets
-	const uniqueRooms = Array.from(new Set(rooms)).reverse();
+	let uniqueRooms = [...data.meta.rooms].reverse();
+
 	const iconsAreSmall = uniqueRooms.length > 10;
 	const youarehere = data.meta.roomYouAreHereEmoticon;
 

@@ -10,6 +10,22 @@ const Likes: React.FC<LikesProps> = ({ likes }) => {
 		return null; // Return nothing if there are no likes
 	}
 
+	const renderDJName = (like: Like) => {
+		if (like.links && like.links.length > 0) {
+			return (
+				<a
+					href={like.links[0]}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="underline"
+				>
+					{like.dj}
+				</a>
+			);
+		}
+		return like.dj;
+	};
+
 	return (
 		<div className="likes-container">
 			<h2 className="text-[25px] mb-3">
@@ -18,7 +34,7 @@ const Likes: React.FC<LikesProps> = ({ likes }) => {
 			<ul className="text-[18px] mb-4">
 				{likes.map((like, index) => (
 					<li key={index} className="likes-items">
-						🤍 {like.dj} {like.room}
+						🤍 {renderDJName(like)} {like.room}
 						{like.title !== "Sisyphos" && ` - ${like.title}`} -{" "}
 						{formatDate(like.started)}
 					</li>

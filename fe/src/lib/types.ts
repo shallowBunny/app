@@ -5,6 +5,7 @@ export interface Set {
 	room: string;
 	start: Date;
 	end: Date;
+	links: [string];
 }
 
 export interface Meta {
@@ -38,6 +39,7 @@ export interface Like {
 	beginningSchedule: Date;
 	room: string;
 	started: Date;
+	links: [string];
 }
 export interface RoomSituation {
 	room: string;

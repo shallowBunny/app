@@ -20,6 +20,7 @@ export async function fetchData(): Promise<Data> {
 			room: item.room,
 			start: new Date(item.start),
 			end: new Date(item.end),
+			links: item.links,
 		})),
 		meta: {
 			...data.meta,
