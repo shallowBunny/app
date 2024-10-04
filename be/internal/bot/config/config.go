@@ -38,6 +38,7 @@ type Config struct {
 	BotAllowInput                      bool     `yaml:"botAllowInput"`
 	BotMotd                            string   `yaml:"botMotd"`
 	BotOldLineupMessage                string   `yaml:"botOldLineupMessage"`
+	BotNoDataAvailableYet              string   `yaml:"botNoDataAvailableYet"`
 	TelegramDeleteLeftTheGroupMessages bool     `yaml:"telegramDeleteLeftTheGroupMessages"`
 	Admins                             []int    `yaml:"secrets.admins,omitempty"`
 	Modos                              []int    `yaml:"secrets.modos,omitempty"`
@@ -189,6 +190,11 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 
 	c.ReadSetsFromRedisOnRestart = v.GetBool("readSetsFromRedisOnRestart")
 	c.BotAllowInput = v.GetBool("botAllowInput")
+
+	c.BotNoDataAvailableYet = v.GetString("botNoDataAvailableYet")
+	if c.BotNoDataAvailableYet == "" {
+		c.BotNoDataAvailableYet = "⚠️ No data available yet ⚠️"
+	}
 
 	c.BeginningScheduleString = v.GetString("beginningSchedule")
 	if c.BeginningScheduleString == "" {

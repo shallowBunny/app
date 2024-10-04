@@ -26,7 +26,8 @@ meta:
 nbDaysForInput: 3
 
 buttons: [ 'Now', 'ALL', 'Help' ]
-input: false
+readSetsFromRedisOnRestart: false
+botAllowInput: true
 nowSkipClosed: false
 
 

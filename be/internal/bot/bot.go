@@ -68,7 +68,6 @@ type Bot struct {
 	commandsHistoryLogFile *os.File
 	logs                   string
 	roomsEmoticons         []string
-	rooms                  []string
 	magicRoomButton        bool
 }
 
@@ -179,9 +178,9 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 				if len(v.Sets) != 0 {
 					emptyLineup = false
 				}
-				v.ComputeEvents()
+				v.Init(config)
 			}
-			bot.RootLineUp.ComputeEvents()
+			bot.RootLineUp.Init(config)
 			if len(bot.RootLineUp.Sets) != 0 {
 				emptyLineup = false
 			}
@@ -206,6 +205,7 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 		gotBotFromDB = false
 		log.Info().Msg("loading bot from config")
 	}
+
 	bot.dao = dao
 	bot.users = users.New(dao, config.Lineup.BeginningSchedule)
 	bot.commandsHistoryLogFile = f
@@ -213,7 +213,6 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 	bot.channel = make(chan Message)
 	bot.admins = config.Admins
 	bot.modos = config.Modos
-	bot.rooms = config.Lineup.Rooms
 	bot.magicRoomButton = len(config.Lineup.Rooms) < maxMnbRoomsForRoomButton
 
 	for _, v := range config.Lineup.Rooms {
@@ -434,9 +433,9 @@ func (b *Bot) DeleteUser(chatId int64) error {
 
 func (b *Bot) ShowRoom(chatId int64, lineup *lineUp.LineUp, index int) string {
 	if b.magicRoomButton {
-		b.users.SetLastShownRoom(chatId, (index+1)%len(b.rooms))
+		b.users.SetLastShownRoom(chatId, (index+1)%len(b.config.Lineup.Rooms))
 	}
-	return lineup.Print(b.config.Meta.RoomYouAreHereEmoticon, -1, b.rooms[index])
+	return lineup.Print(b.config.Meta.RoomYouAreHereEmoticon, -1, b.config.Lineup.Rooms[index])
 }
 
 func (b *Bot) defaultCommand(orig string, lineup *lineUp.LineUp, chatId int64) string {
@@ -478,14 +477,13 @@ func (b Bot) GetLineUpForUser(chatId int64) *lineUp.LineUp {
 
 func (b Bot) PrintLineupForCheckConfig() string {
 	res := "\n\nLineup in each room:\n"
-	for _, v := range b.RootLineUp.Rooms {
+	for _, v := range b.config.Lineup.Rooms {
 		res += b.RootLineUp.PrintForMerge(v)
 	}
 	return res
 }
 
-func compareLineUps(a, b *lineUp.LineUp) (string, error) {
-
+func (b Bot) compareLineUps(lineupA, lineupB *lineUp.LineUp) (string, error) {
 	log.Debug().Msg("*** compareLineUps")
 
 	dmp := diffmatchpatch.New()
@@ -493,24 +491,12 @@ func compareLineUps(a, b *lineUp.LineUp) (string, error) {
 	res := ""
 	changed := false
 
-	// Create a map to ensure we process each room only once
-	roomsMap := make(map[string]bool)
-
-	// Add all rooms from a to the map
-	for _, v := range a.Rooms {
-		roomsMap[v] = true
-	}
-
-	// Add all rooms from b to the map
-	for _, v := range b.Rooms {
-		roomsMap[v] = true
-	}
-
-	for room := range roomsMap {
-		f := a.PrintForMerge(room)
+	// Use rooms from the bot's config
+	for _, room := range b.config.Lineup.Rooms {
+		f := lineupA.PrintForMerge(room)
 		log.Debug().Msg(fmt.Sprintf("1/ compareLineUps: <%v:%v> ", f, room))
 
-		f2 := b.PrintForMerge(room)
+		f2 := lineupB.PrintForMerge(room)
 		log.Debug().Msg(fmt.Sprintf("2/ compareLineUps: <%v:%v> ", f2, room))
 
 		if f == f2 {
@@ -531,7 +517,7 @@ func compareLineUps(a, b *lineUp.LineUp) (string, error) {
 	}
 	log.Debug().Msg("end")
 
-	log.Debug().Msg(fmt.Sprintf("compareLineUps: <%v> <%v> -> <%v> err:<%v>", a.Dump(), b.Dump(), res, err))
+	log.Debug().Msg(fmt.Sprintf("compareLineUps: <%v> <%v> -> <%v> err:<%v>", lineupA.Dump(), lineupB.Dump(), res, err))
 
 	return res, err
 }
@@ -593,7 +579,7 @@ func (b Bot) CheckMergeRequest(r *MergeRequests) (string, error) {
 		log.Debug().Msg("added " + l.PrintSet(s) + "\n")
 		log.Debug().Msg(l.AddSet(s))
 	}
-	compare, err := compareLineUps(b.RootLineUp, l)
+	compare, err := b.compareLineUps(b.RootLineUp, l)
 	answer += compare
 	log.Debug().Msg(fmt.Sprintf("compare:<%v>", compare))
 	return answer, err
@@ -756,7 +742,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 				if lineUp != b.RootLineUp {
 
 					html = true
-					answer, _ = compareLineUps(b.RootLineUp, lineUp)
+					answer, _ = b.compareLineUps(b.RootLineUp, lineUp)
 					log.Debug().Msg(answer)
 					newLineup, inputCommandResult := lineUp.InputCommand(chatId, arg)
 					if newLineup != lineUp {
@@ -778,7 +764,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 				switch inputCommandResult.Answer {
 				// reponse a merge
 				case inputs.MergeSubmitMessage:
-					mr := NewMergeRequest(b.RootLineUp.StartTime, newLineup.Changes, chatId, user, answer)
+					mr := NewMergeRequest(b.config.Lineup.BeginningSchedule, newLineup.Changes, chatId, user, answer)
 					b.CreateMergeRequest(*mr)
 					delete(b.UsersLineUps, chatId)
 					lineUp = b.RootLineUp

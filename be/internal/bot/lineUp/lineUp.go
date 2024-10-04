@@ -40,23 +40,19 @@ func printTimeWithDay(t time.Time) string {
 }
 
 type LineUp struct {
-	Sets             []Set
-	events           []Event
-	StartTime        time.Time
-	Inputs           inputs.Inputs
-	Rooms            []string
-	Changes          []inputs.InputCommandResultSet
-	Input            bool
-	NowSkipClosed    bool
-	OldLineupMessage string
+	Sets    []Set
+	events  []Event
+	Inputs  inputs.Inputs
+	Changes []inputs.InputCommandResultSet
+	config  *config.Config
 }
 
 const (
-	UnknownDJ           = "?"
-	closed              = "🚫 closed"
-	noDataRoom          = "⚠️ no data"
-	openedFloor         = "✅"
-	noData              = "⚠️ No data available yet ⚠️"
+	UnknownDJ   = "?"
+	closed      = "🚫 closed"
+	noDataRoom  = "⚠️ no data"
+	openedFloor = "✅"
+	//noData              = "⚠️ No data available yet ⚠️"
 	missingData         = "\n\n⚠️ Some data is missing ⚠️"
 	here                = " <- you are here"
 	minSizeDJSearch     = 2
@@ -66,48 +62,32 @@ const (
 
 func (l LineUp) DuplicateLineUp() *LineUp {
 	new := &LineUp{
-		Sets:             l.Sets,
-		events:           l.events,
-		StartTime:        l.StartTime,
-		Inputs:           l.Inputs,
-		Rooms:            l.Rooms,
-		Changes:          l.Changes,
-		Input:            l.Input,
-		NowSkipClosed:    l.NowSkipClosed,
-		OldLineupMessage: l.OldLineupMessage,
+		Sets:    l.Sets,
+		events:  l.events,
+		Inputs:  l.Inputs,
+		Changes: l.Changes,
+		config:  l.config,
 	}
 	return new
 }
 
 func New(config *config.Config) *LineUp {
-
-	startTime := config.Lineup.BeginningSchedule
-	nbDaysForInput := config.NbDaysForInput
-	input := config.ReadSetsFromRedisOnRestart
-	oldLineupMessage := config.BotOldLineupMessage
-	NowSkipClosed := config.NowSkipClosed
-
 	days := []string{}
 
-	for i := 0; i < nbDaysForInput; i++ {
-		d := startTime.Add(time.Duration(24*i) * time.Hour).Format("Mon")
+	for i := 0; i < config.NbDaysForInput; i++ {
+		d := config.Lineup.BeginningSchedule.Add(time.Duration(24*i) * time.Hour).Format("Mon")
 		days = append(days, d)
 	}
 
 	lineUp := &LineUp{
-		Sets:             []Set{},
-		events:           []Event{},
-		Inputs:           inputs.New(days, config.Lineup.Rooms),
-		StartTime:        startTime,
-		Rooms:            config.Lineup.Rooms,
-		Changes:          []inputs.InputCommandResultSet{},
-		Input:            input,
-		OldLineupMessage: oldLineupMessage,
-		NowSkipClosed:    NowSkipClosed,
+		Sets:    []Set{},
+		events:  []Event{},
+		Inputs:  inputs.New(days, config.Lineup.Rooms),
+		Changes: []inputs.InputCommandResultSet{},
+		config:  config,
 	}
 
 	for _, room := range config.Lineup.Rooms {
-
 		sets, ok := config.Lineup.Sets[room]
 		if !ok {
 			log.Error().Msg(fmt.Sprintf("missing room <%v>", room))
@@ -121,6 +101,7 @@ func New(config *config.Config) *LineUp {
 			}
 		}
 	}
+
 	emptyDurations := false
 	for _, s := range lineUp.Sets {
 		if s.End == s.Start {
@@ -268,8 +249,7 @@ func (l *LineUp) InputCommand(chatID int64, commandOrArg string) (*LineUp, Input
 }
 
 func (l *LineUp) NewSet(djName string, room string, day int, hour int, min int, duration int, kind int) Set {
-
-	t := l.StartTime
+	t := l.config.Lineup.BeginningSchedule
 	t1 := time.Date(t.Year(), t.Month(), t.Day(), hour, min, t.Second(), t.Nanosecond(), t.Location())
 	t1 = t1.Add(time.Duration((int(time.Hour) * 24 * day)))
 
@@ -294,14 +274,13 @@ func filterNonASCIIAndSpaces(input string) string {
 }
 
 func (l *LineUp) FindRoom(source string, distanceMaxRoom int) (int, string) {
-
 	source = strings.ToUpper(filterNonASCIIAndSpaces(source))
 
 	minDistance := distanceMaxRoom + 1
 	room := ""
 	indexRoom := 0
 
-	for i, v := range l.Rooms {
+	for i, v := range l.config.Lineup.Rooms {
 		target := strings.ToUpper(filterNonASCIIAndSpaces(v))
 		distance := levenshtein.DistanceForStrings([]rune(source), []rune(target), levenshtein.DefaultOptions)
 		if distance <= distanceMaxRoom {
@@ -381,20 +360,21 @@ func (l *LineUp) FindDJ(i string, when time.Time) string {
 }
 
 func (l *LineUp) AddSet(s Set) string {
-
 	roomKnown := false
-	for _, v := range l.Rooms {
+	msg := ""
+
+	for _, v := range l.config.Lineup.Rooms {
 		if v == s.Room {
 			roomKnown = true
+			break
 		}
 	}
 	if !roomKnown {
-		l.Rooms = append(l.Rooms, s.Room)
+		msg += fmt.Sprintf("Skipped  set <%v> because unknown room <%v>\n", l.PrintSet(s), s.Room)
+		return msg
 	}
 
 	resSet := []Set{}
-
-	msg := ""
 
 	for _, v := range l.Sets {
 		skip := false
@@ -418,7 +398,7 @@ func (l *LineUp) AddSet(s Set) string {
 
 	sort.Slice(resSet, func(i, j int) bool {
 		if resSet[i].Room != resSet[j].Room {
-			for _, v := range l.Rooms {
+			for _, v := range l.config.Lineup.Rooms {
 				if v == resSet[i].Room {
 					return false
 				}
@@ -437,16 +417,19 @@ func (l *LineUp) AddSet(s Set) string {
 
 	//log.Trace().Msg(fmt.Sprintf("start=%v", s.Start))
 
-	l.ComputeEvents()
-
+	l.computeEvents()
 	return msg
 }
+func (l *LineUp) Init(config *config.Config) {
+	l.config = config
+	l.computeEvents()
+}
 
-func (l *LineUp) ComputeEvents() {
+func (l *LineUp) computeEvents() {
 	events := []Event{}
 	for _, v := range l.Sets {
 		priority := 0
-		for i, v2 := range l.Rooms {
+		for i, v2 := range l.config.Lineup.Rooms {
 			if v2 == v.Room {
 				priority = i
 				break
@@ -470,7 +453,7 @@ func sameDay(date1, date2 time.Time) bool {
 		date1.Day() == date2.Day()
 }
 
-func printRoom(sets []Set, oldData bool, oldLineupMessage string, currentTime time.Time, youAre string, filterNomSalle string) string {
+func (l LineUp) printRoom(sets []Set, oldData bool, oldLineupMessage string, currentTime time.Time, youAre string, filterNomSalle string) string {
 	var res string
 	var closingTime time.Time
 
@@ -494,7 +477,7 @@ func printRoom(sets []Set, oldData bool, oldLineupMessage string, currentTime ti
 		}
 	}
 	if !foundData {
-		return noData
+		return l.config.BotNoDataAvailableYet
 	}
 
 	for _, set := range sets {
@@ -586,9 +569,8 @@ func (l LineUp) Print(youAreHere string, filter int, filterNomSalle string) stri
 	current := time.Now()
 	s := []Set{}
 	var oldData bool = true
-	var oldLineupMessage = l.OldLineupMessage
+	var oldLineupMessage = l.config.BotOldLineupMessage
 	for _, v := range l.Sets {
-		//	if v.End.After(current) {
 		if v.End.After(current) {
 			oldLineupMessage = ""
 			oldData = false
@@ -604,7 +586,6 @@ func (l LineUp) Print(youAreHere string, filter int, filterNomSalle string) stri
 			}
 		}
 		s = append(s, v)
-		//}
 	}
 
 	res := ""
@@ -613,23 +594,23 @@ func (l LineUp) Print(youAreHere string, filter int, filterNomSalle string) stri
 	}
 
 	if len(s) == 0 {
-		log.Warn().Msg(fmt.Sprintf("Print: returning %s", noData))
-		res += noData
+		log.Warn().Msg(fmt.Sprintf("Print: returning %s", l.config.BotNoDataAvailableYet))
+		res += l.config.BotNoDataAvailableYet
 		return res
 	}
-	return res + printRoom(s, oldData, oldLineupMessage, current, youAreHere, filterNomSalle)
+	return res + l.printRoom(s, oldData, oldLineupMessage, current, youAreHere, filterNomSalle)
 }
 
 func (l LineUp) getDayNumber(t time.Time) int {
 	// TOFIX
-	diff := int(t.Sub(l.StartTime).Hours())
+	diff := int(t.Sub(l.config.Lineup.BeginningSchedule).Hours())
 	if diff < 0 {
 		log.Error().Msg("getDayNumber on date after beginning")
 		return 0
 	}
-	sd := l.StartTime
+	sd := l.config.Lineup.BeginningSchedule
 	added := time.Hour
-	currentDay := l.StartTime.Day()
+	currentDay := l.config.Lineup.BeginningSchedule.Day()
 	dayNumber := 0
 	for {
 		currentTime := sd.Add(added)
@@ -774,7 +755,7 @@ func (l LineUp) PrintCurrentForTime(when *string) string {
 				if foundCurrent {
 					res += " (closing at " + printTime(currentClosingTime) + ")"
 				} else {
-					if !l.NowSkipClosed {
+					if !l.config.NowSkipClosed {
 						res += room + " " + closed
 					} else {
 						permanentelyClosed = true
@@ -846,13 +827,13 @@ func (l LineUp) PrintCurrentForTime(when *string) string {
 		if foundCurrent {
 			res += " (closing at " + printTime(currentClosingTime) + ")"
 		} else {
-			if !l.NowSkipClosed && room != "" {
+			if !l.config.NowSkipClosed && room != "" {
 				res += room + " " + closed
 			}
 		}
 	}
 
-	for _, v := range l.Rooms {
+	for _, v := range l.config.Lineup.Rooms {
 		ok := foundRoom[v]
 		if !ok {
 			res += "\n" + v + " " + noDataRoom
@@ -860,9 +841,9 @@ func (l LineUp) PrintCurrentForTime(when *string) string {
 	}
 
 	if res == "" || res == "\n" {
-		log.Warn().Msg(fmt.Sprintf("PrintCurrentForTime: returning %s", noData))
-		res = noData
-	} else if roomsFound != len(l.Rooms) {
+		log.Warn().Msg(fmt.Sprintf("PrintCurrentForTime: returning %s", l.config.BotNoDataAvailableYet))
+		res = l.config.BotNoDataAvailableYet
+	} else if roomsFound != len(l.config.Lineup.Rooms) {
 		res += missingData
 	}
 
