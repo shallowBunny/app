@@ -150,13 +150,13 @@ func TestInputMergeAndRebase(t *testing.T) {
 	var userID int64 = 123
 	currentTime = currentTime.Add(24 * time.Hour)
 	dumpBotInitial := `🔨:
-- '1 03:00 180 0 E'
-- '1 06:00 180 0 F'
+- '1 03:00 180 [] E'
+- '1 06:00 180 [] F'
 🍵:
-- '1 01:00 60 0 A'
-- '1 02:00 60 0 B'
-- '1 03:00 60 0 C'
-- '1 04:00 60 0 D'
+- '1 01:00 60 [] A'
+- '1 02:00 60 [] B'
+- '1 03:00 60 [] C'
+- '1 04:00 60 [] D'
 `
 	// create bot for config object, with an input command
 	bot := createBotForTestInputMergeAndRebase(config, userID, currentTime)
@@ -242,13 +242,13 @@ func TestInputMergeAndRebase(t *testing.T) {
 	}
 
 	dumpBotModified := `🔨:
-- '1 03:00 180 0 E'
-- '1 06:00 180 0 F'
+- '1 03:00 180 [] E'
+- '1 06:00 180 [] F'
 🍵:
-- '1 01:00 60 0 A'
+- '1 01:00 60 [] A'
 # hole: 02:00 to 02:30
-- '1 02:30 90 0 DJ FART'
-- '1 04:00 60 0 D'
+- '1 02:30 90 [] DJ FART'
+- '1 04:00 60 [] D'
 `
 
 	// dump the root lineUp
@@ -331,16 +331,16 @@ func TestInputMultipleMergeAndRebase(t *testing.T) {
 	}
 
 	dumpBotModified := `🔨:
-- '1 03:00 180 0 E'
-- '1 06:00 180 0 F'
+- '1 03:00 180 [] E'
+- '1 06:00 180 [] F'
 🍵:
-- '1 01:00 60 0 A'
+- '1 01:00 60 [] A'
 # hole: 02:00 to 02:30
-- '1 02:30 90 0 DJ FART'
-- '1 04:00 60 0 D'
-- '1 05:00 120 0 DJ FART 2'
-- '1 07:00 60 0 DJ FART 3'
-- '1 08:00 60 0 DJ FART 4'
+- '1 02:30 90 [] DJ FART'
+- '1 04:00 60 [] D'
+- '1 05:00 120 [] DJ FART 2'
+- '1 07:00 60 [] DJ FART 3'
+- '1 08:00 60 [] DJ FART 4'
 `
 
 	// dump the root lineUp

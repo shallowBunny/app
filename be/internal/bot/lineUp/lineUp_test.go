@@ -56,7 +56,7 @@ func TestLineUpInput(t *testing.T) {
 
 	got := lu.Dump()
 	want := `roomA:
-- '0 23:00 120 0 MADmoiselle'
+- '0 23:00 120 [] MADmoiselle'
 `
 	if !reflect.DeepEqual(want, got) {
 		t.Fatalf("expected: \n<%v>, got: \n<%v>", want, got)
@@ -107,7 +107,7 @@ func TestLineUpInput(t *testing.T) {
 	// check deuxieme lineup modifie
 	got = l.Dump()
 	want = `roomA:
-- '0 23:30 180 0 pierre'
+- '0 23:30 180 [] pierre'
 `
 	if !reflect.DeepEqual(want, got) {
 		t.Fatalf("expected: \n<%v>, got: \n<%v>", want, got)
@@ -167,7 +167,7 @@ func TestFindRoom(t *testing.T) {
 						Dj:       "Ava Irandoost",
 					},
 				},
-				"roomSonn": []config.Set{
+				"roomSonn": {
 					config.Set{Day: 4,
 						Hour:     18,
 						Minute:   00,

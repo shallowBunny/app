@@ -21,7 +21,7 @@ type Set struct {
 	Start time.Time `json:"start"`
 	End   time.Time `json:"end"`
 	Room  string    `json:"room"`
-	kind  int
+	Links []string  `json:"links"`
 }
 
 type Event struct {
@@ -95,7 +95,7 @@ func New(config *config.Config) *LineUp {
 		}
 
 		for _, s := range sets {
-			msg := lineUp.AddSet(lineUp.NewSet(s.Dj, room, s.Day, s.Hour, s.Minute, s.Duration, 0))
+			msg := lineUp.AddSet(lineUp.NewSet(s.Dj, room, s.Day, s.Hour, s.Minute, s.Duration, s.Links))
 			if msg != "" {
 				log.Error().Msg(msg)
 			}
@@ -234,8 +234,8 @@ func (l *LineUp) InputCommand(chatID int64, commandOrArg string) (*LineUp, Input
 		log.Debug().Msg(fmt.Sprintf("List of changes for user %v <%v> in detached lineup", chatID, newLineup.Changes))
 
 		for _, v := range r.Sets {
-			s := newLineup.NewSet(v.Dj, v.Room, v.Day, v.Hour, v.Minute, v.Duration, 0)
-			answerModo += "added " + newLineup.PrintSet(s) + "\n"
+			s := newLineup.NewSet(v.Dj, v.Room, v.Day, v.Hour, v.Minute, v.Duration, nil)
+			answerModo += "added " + newLineup.PrintSetOldFormat(s) + "\n"
 			answerModo += newLineup.AddSet(s)
 		}
 	}
@@ -248,7 +248,7 @@ func (l *LineUp) InputCommand(chatID int64, commandOrArg string) (*LineUp, Input
 	return newLineup, res
 }
 
-func (l *LineUp) NewSet(djName string, room string, day int, hour int, min int, duration int, kind int) Set {
+func (l *LineUp) NewSet(djName string, room string, day int, hour int, min int, duration int, links []string) Set {
 	t := l.config.Lineup.BeginningSchedule
 	t1 := time.Date(t.Year(), t.Month(), t.Day(), hour, min, t.Second(), t.Nanosecond(), t.Location())
 	t1 = t1.Add(time.Duration((int(time.Hour) * 24 * day)))
@@ -258,7 +258,7 @@ func (l *LineUp) NewSet(djName string, room string, day int, hour int, min int, 
 		Start: t1,
 		End:   t1.Add(time.Duration((int(time.Minute) * duration))),
 		Room:  room,
-		kind:  kind,
+		Links: links,
 	}
 	return set
 }
@@ -370,7 +370,7 @@ func (l *LineUp) AddSet(s Set) string {
 		}
 	}
 	if !roomKnown {
-		msg += fmt.Sprintf("Skipped  set <%v> because unknown room <%v>\n", l.PrintSet(s), s.Room)
+		msg += fmt.Sprintf("Skipped  set <%v> because unknown room <%v>\n", l.PrintSetOldFormat(s), s.Room)
 		return msg
 	}
 
@@ -391,7 +391,7 @@ func (l *LineUp) AddSet(s Set) string {
 		if !skip {
 			resSet = append(resSet, v)
 		} else {
-			msg += v.Room + " deleted <" + l.PrintSet(v) + "> because it collided with <" + l.PrintSet(s) + ">\n"
+			msg += v.Room + " deleted <" + l.PrintSetOldFormat(v) + "> because it collided with <" + l.PrintSetOldFormat(s) + ">\n"
 		}
 	}
 	resSet = append(resSet, s)
@@ -565,7 +565,7 @@ func (l LineUp) PrintForMerge(filterNomSalle string) string {
 	return res
 }
 
-func (l LineUp) Print(youAreHere string, filter int, filterNomSalle string) string {
+func (l LineUp) Print(youAreHere string, filterNomSalle string) string {
 	current := time.Now()
 	s := []Set{}
 	var oldData bool = true
@@ -574,11 +574,6 @@ func (l LineUp) Print(youAreHere string, filter int, filterNomSalle string) stri
 		if v.End.After(current) {
 			oldLineupMessage = ""
 			oldData = false
-		}
-		if filter != -1 {
-			if v.kind != filter {
-				continue
-			}
 		}
 		if filterNomSalle != "" {
 			if v.Room != filterNomSalle {
@@ -625,8 +620,8 @@ func (l LineUp) getDayNumber(t time.Time) int {
 	}
 }
 
-func (l LineUp) PrintSet(v Set) string {
-	return "- '" + strconv.Itoa(l.getDayNumber(v.Start)) + " " + printTime(v.Start) + " " + strconv.Itoa(int(v.End.Sub(v.Start).Minutes())) + " " + strconv.Itoa(v.kind) + " " + v.Dj + "'"
+func (l LineUp) PrintSetOldFormat(v Set) string {
+	return "- '" + strconv.Itoa(l.getDayNumber(v.Start)) + " " + printTime(v.Start) + " " + strconv.Itoa(int(v.End.Sub(v.Start).Minutes())) + " " + fmt.Sprintf("%v", v.Links) + " " + v.Dj + "'"
 }
 
 func (l LineUp) Dump() string {
@@ -658,7 +653,7 @@ func (l LineUp) Dump() string {
 		}
 		lastClosing = v.End
 
-		res += l.PrintSet(v)
+		res += l.PrintSetOldFormat(v)
 
 		foundAny = true
 	}

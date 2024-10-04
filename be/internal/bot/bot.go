@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -435,7 +436,7 @@ func (b *Bot) ShowRoom(chatId int64, lineup *lineUp.LineUp, index int) string {
 	if b.magicRoomButton {
 		b.users.SetLastShownRoom(chatId, (index+1)%len(b.config.Lineup.Rooms))
 	}
-	return lineup.Print(b.config.Meta.RoomYouAreHereEmoticon, -1, b.config.Lineup.Rooms[index])
+	return lineup.Print(b.config.Meta.RoomYouAreHereEmoticon, b.config.Lineup.Rooms[index])
 }
 
 func (b *Bot) defaultCommand(orig string, lineup *lineUp.LineUp, chatId int64) string {
@@ -555,7 +556,7 @@ func (b Bot) ChecForDuplicateMergeRequest(r *MergeRequests) error {
 		if len(mr.Changes) == len(r.Changes) {
 			foundDifference := false
 			for i := range mr.Changes {
-				if mr.Changes[i] != r.Changes[i] {
+				if !reflect.DeepEqual(mr.Changes[i], r.Changes[i]) {
 					foundDifference = true
 					continue
 				}
@@ -575,8 +576,8 @@ func (b Bot) CheckMergeRequest(r *MergeRequests) (string, error) {
 	l := b.RootLineUp.DuplicateLineUp()
 	answer += fmt.Sprintf("Merge request %d from %v (submitted %v)\n\n", r.ID, r.User, r.Created.Format("Mon 15:04"))
 	for _, v := range r.Changes {
-		s := l.NewSet(v.Dj, v.Room, v.Day, v.Hour, v.Minute, v.Duration, 0)
-		log.Debug().Msg("added " + l.PrintSet(s) + "\n")
+		s := l.NewSet(v.Dj, v.Room, v.Day, v.Hour, v.Minute, v.Duration, nil)
+		log.Debug().Msg("added " + l.PrintSetOldFormat(s) + "\n")
 		log.Debug().Msg(l.AddSet(s))
 	}
 	compare, err := b.compareLineUps(b.RootLineUp, l)
@@ -638,7 +639,7 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 		}
 		answer = startedNoticationsMessage
 	case "p", "all":
-		res += lineUp.Print(b.config.Meta.RoomYouAreHereEmoticon, -1, "")
+		res += lineUp.Print(b.config.Meta.RoomYouAreHereEmoticon, "")
 		answer = res
 	case "now":
 		answer = lineUp.PrintCurrent()
@@ -707,8 +708,8 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 					case inputs.RebaseAcceptMessage:
 						r := b.UsersMergeRequest[0]
 						for _, v := range r.Changes {
-							s := b.RootLineUp.NewSet(v.Dj, v.Room, v.Day, v.Hour, v.Minute, v.Duration, 0)
-							answer += "added " + b.RootLineUp.PrintSet(s) + "\n"
+							s := b.RootLineUp.NewSet(v.Dj, v.Room, v.Day, v.Hour, v.Minute, v.Duration, nil)
+							answer += "added " + b.RootLineUp.PrintSetOldFormat(s) + "\n"
 							answer += b.RootLineUp.AddSet(s)
 						}
 						b.UsersMergeRequest = b.UsersMergeRequest[1:]

@@ -29,7 +29,7 @@ type Meta struct {
 	MobileAppName             string    `json:"mobileAppName" yaml:"mobileAppName"`
 	Prefix                    string    `json:"prefix" yaml:"prefix"`
 	RoomYouAreHereEmoticon    string    `json:"roomYouAreHereEmoticon" yaml:"roomYouAreHereEmoticon"`
-	Rooms                     []string  `json:"rooms" yaml:"rooms"`
+	Rooms                     []string  `json:"rooms" yaml:"-"`
 	Title                     string    `json:"title" yaml:"title"`
 	BeginningSchedule         time.Time `json:"beginningSchedule" yaml:"-"`
 }
@@ -57,11 +57,12 @@ type Config struct {
 }
 
 type Set struct {
-	Day      int    `yaml:"day" json:"day"`
-	Duration int    `yaml:"duration" json:"duration"`
-	Dj       string `yaml:"dj" json:"dj"`
-	Hour     int    `yaml:"hour" json:"hour"`
-	Minute   int    `yaml:"minute" json:"minute"`
+	Day      int      `yaml:"day" json:"day"`
+	Duration int      `yaml:"duration" json:"duration"`
+	Dj       string   `yaml:"dj" json:"dj"`
+	Hour     int      `yaml:"hour" json:"hour"`
+	Minute   int      `yaml:"minute" json:"minute"`
+	Links    []string `yaml:"links" json:"links"`
 }
 
 type Lineup struct {
