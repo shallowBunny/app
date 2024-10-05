@@ -108,9 +108,7 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 									<Room
 										youarehere={youarehere}
 										room={room}
-										sets={data.sets.filter(
-											(set) => set.room === room && set.dj !== "?"
-										)}
+										sets={data.sets.filter((set) => set.room === room)}
 										currentMinute={currentMinute}
 										likedDJs={likedDJs} // Pass likedDJs as a prop
 									/>

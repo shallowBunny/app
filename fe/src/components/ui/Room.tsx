@@ -14,9 +14,69 @@ interface RoomProps {
 	likedDJs: Like[]; // Use an array of Like objects instead of a map
 }
 
+const mergeMissingDataSets = (sets: Set[]): Set[] => {
+	const mergedSets: Set[] = [];
+	let currentMergedSet: Set | null = null;
+
+	sets.forEach((set) => {
+		if (set.dj === "?") {
+			if (currentMergedSet) {
+				currentMergedSet.end = set.end; // Extend the current merged set
+			} else {
+				currentMergedSet = { ...set, dj: "⚠️ Missing Data ⚠️" }; // Start a new merged set
+			}
+		} else {
+			if (currentMergedSet) {
+				mergedSets.push(currentMergedSet); // Push merged set when a valid DJ set is found
+				currentMergedSet = null;
+			}
+			mergedSets.push(set);
+		}
+	});
+
+	if (currentMergedSet) {
+		mergedSets.push(currentMergedSet); // Push the final merged set if it exists
+	}
+
+	return mergedSets;
+};
 // Utility function to check if a DJ is liked
 const isDjLiked = (djName: string, likedDJs: Like[]): boolean => {
 	return likedDJs.some((like) => like.dj === djName);
+};
+
+const addClosingOrClosedSets = (sets: Set[], currentTime: Date): Set[] => {
+	const updatedSets: Set[] = [];
+
+	// Loop through the sets to check for gaps
+	for (let i = 0; i < sets.length; i++) {
+		const currentSet = sets[i];
+		const nextSet = sets[i + 1];
+
+		// Add the current set to the updated list if it exists
+		currentSet && updatedSets.push(currentSet);
+
+		if (nextSet && currentSet) {
+			const currentSetEndTime = new Date(currentSet.end).getTime();
+			const nextSetStartTime = new Date(nextSet.start).getTime();
+
+			// If there's a gap between the current set's end and the next set's start
+			if (currentSetEndTime < nextSetStartTime) {
+				const closingSet: Set = {
+					room: currentSet.room,
+					start: currentSet.end,
+					end: nextSet.start,
+					dj: currentSetEndTime < currentTime.getTime() ? "closed" : "closing",
+					links: [""],
+				};
+
+				// Add the closing/closed set during the gap
+				updatedSets.push(closingSet);
+			}
+		}
+	}
+
+	return updatedSets;
 };
 
 const shouldInsertBeforeNextDayMarker = (
@@ -71,7 +131,7 @@ const shouldInsertBeforeNextDayMarker = (
 	);
 };
 
-export const isSetOngoingNow = (sets: Set[]): boolean => {
+const isSetOngoingNow = (sets: Set[]): boolean => {
 	const currentTime = new Date();
 
 	for (const set of sets) {
@@ -88,7 +148,13 @@ export const isSetOngoingNow = (sets: Set[]): boolean => {
 
 const Room = (props: RoomProps) => {
 	const { sets, room, youarehere, currentMinute, likedDJs } = props; // Destructure likedDJs (array)
-	const groupedSets = groupSetsByDayAndTime(sets);
+
+	const mergedSets = addClosingOrClosedSets(
+		mergeMissingDataSets(sets),
+		currentMinute
+	);
+
+	const groupedSets = groupSetsByDayAndTime(mergedSets);
 
 	// Sort the days chronologically
 	const sortedDays = Object.keys(groupedSets).sort((a, b) => {
@@ -132,7 +198,11 @@ const Room = (props: RoomProps) => {
 						hour: "2-digit",
 						minute: "2-digit",
 					})}{" "}
-					{new Date(lastSetOfLastDay.end) < currentTime ? "closed" : "closing"}
+					<span className="italic">
+						{new Date(lastSetOfLastDay.end) < currentTime
+							? "closed"
+							: "closing"}
+					</span>
 				</h2>
 			);
 		}
@@ -200,18 +270,30 @@ const Room = (props: RoomProps) => {
 													{(youAreHereInserted = true)}
 												</>
 											)}
-											<li
-												key={`${set.dj}-${set.start}`}
-												className="text-[18px]"
-											>
-												{set.start.toLocaleTimeString("en-GB", {
-													hour: "2-digit",
-													minute: "2-digit",
-												})}{" "}
-												{set.dj}
-												{/* Show heart if the DJ is liked */}
-												{isDjLiked(set.dj, likedDJs) && <span> ❤️</span>}
-											</li>
+											{set.dj === "closed" || set.dj === "closing" ? (
+												<li
+													key={`${set.dj}-${set.start}`}
+													className="text-[18px]" // Add italic styling
+												>
+													{set.start.toLocaleTimeString("en-GB", {
+														hour: "2-digit",
+														minute: "2-digit",
+													})}{" "}
+													<span className="italic">{set.dj}</span>
+												</li>
+											) : (
+												<li
+													key={`${set.dj}-${set.start}`}
+													className="text-[18px]"
+												>
+													{set.start.toLocaleTimeString("en-GB", {
+														hour: "2-digit",
+														minute: "2-digit",
+													})}{" "}
+													{set.dj}
+													{isDjLiked(set.dj, likedDJs) && <span> ❤️</span>}
+												</li>
+											)}
 											{index === setsForDay.length - 1 &&
 												isCurrentDay &&
 												!youAreHereInserted &&
