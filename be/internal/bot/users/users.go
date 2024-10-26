@@ -15,7 +15,8 @@ type UserInfo struct {
 	Notifications bool
 	Deleted       bool
 	NewUser       bool
-	LastShownRoom int
+	MagicButton1  int
+	MagicButton2  int
 }
 
 type Users struct {
@@ -104,20 +105,36 @@ func (u *Users) SetUserAsNew(userId int64) error {
 	return u.SaveUsers()
 }
 
-func (u Users) GetLastShownRoom(userId int64) int {
+func (u *Users) GetMagicButtons(userId int64) (int, int) {
 	info, ok := u.usersInfo[userId]
 	if !ok {
-		return 0
+		return 0, 1
 	}
-	return info.LastShownRoom
+	if info.MagicButton1 == info.MagicButton2 {
+		return 0, 1
+	}
+	return info.MagicButton1, info.MagicButton2
 }
 
-func (u *Users) SetLastShownRoom(userId int64, room int) error {
+func (u *Users) UpdateMagicButtons(userId int64, room int, nbRooms int) error {
 	_, ok := u.usersInfo[userId]
 	if !ok {
-		return errors.New("trying to SetLastShownRoom on unknown user")
+		return errors.New("trying to UpdateMagicButtons on unknown user")
 	}
-	u.usersInfo[userId].LastShownRoom = room
+	if u.usersInfo[userId].MagicButton1 == room {
+		i := (room + 1) % nbRooms
+		if i == u.usersInfo[userId].MagicButton2 {
+			i = (i + 1) % nbRooms
+		}
+		u.usersInfo[userId].MagicButton1 = i
+	}
+	if u.usersInfo[userId].MagicButton2 == room {
+		i := (room + 1) % nbRooms
+		if i == u.usersInfo[userId].MagicButton1 {
+			i = (i + 1) % nbRooms
+		}
+		u.usersInfo[userId].MagicButton2 = i
+	}
 	return u.SaveUsers()
 }
 

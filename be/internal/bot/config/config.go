@@ -2,7 +2,6 @@ package config
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -32,6 +32,7 @@ type Meta struct {
 	Rooms                     []string  `json:"rooms" yaml:"-"`
 	Title                     string    `json:"title" yaml:"title"`
 	BeginningSchedule         time.Time `json:"beginningSchedule" yaml:"-"`
+	TimeZone                  string    `json:"timeZone" yaml:"timeZone"`
 }
 
 type Config struct {
@@ -51,9 +52,11 @@ type Config struct {
 	CommandsHistoryLogFile             string   `yaml:"secrets.commandsHistoryLogFile,omitempty"`
 	NowSkipClosed                      bool     `yaml:"nowSkipClosed"`
 	Port                               int      `yaml:"port"`
-	BeginningScheduleString            string   `yaml:"beginningSchedule"`
-	Meta                               Meta     `yaml:"meta"`
-	Lineup                             Lineup   `yaml:"lineup"`
+	BeginningSchedule                  string   `yaml:"beginningSchedule"`
+
+	Demo   bool   `yaml:"demo"`
+	Meta   Meta   `yaml:"meta"`
+	Lineup Lineup `yaml:"lineup"`
 }
 
 type Set struct {
@@ -66,7 +69,7 @@ type Set struct {
 }
 
 type Lineup struct {
-	BeginningSchedule time.Time        `yaml:"-" json:"beginningSchedule"`
+	BeginningSchedule time.Time        `yaml:"-" json:"-"`
 	Rooms             []string         `yaml:"rooms" json:"rooms"`
 	Sets              map[string][]Set `yaml:"sets" json:"sets"`
 }
@@ -80,19 +83,6 @@ func (config Config) WriteConfigToFile(fileName string) error {
 
 	encoder := yaml.NewEncoder(file)
 	defer encoder.Close()
-
-	return encoder.Encode(config)
-}
-
-func WriteConfigToFile2(config Config, fileName string) error {
-	file, err := os.Create(fileName)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ") // For pretty printing
 	return encoder.Encode(config)
 }
 
@@ -124,6 +114,7 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 		c.ServerToken = v.GetString("secrets.serverToken")
 		c.CommandsHistoryLogFile = v.GetString("secrets.commandsHistoryLogFile")
 		c.LogFile = v.GetString("secrets.logFile")
+		c.Demo = v.GetBool("secrets.demo")
 	}
 
 	c.TelegramDeleteLeftTheGroupMessages = v.GetBool("telegramDeleteLeftTheGroupMessages")
@@ -153,6 +144,11 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 	c.Meta.Title = v.GetString("meta.title")
 	if c.Meta.Title == "" {
 		errorString += "missing meta.title\n"
+	}
+
+	c.Meta.TimeZone = v.GetString("meta.timeZone")
+	if c.Meta.TimeZone == "" {
+		c.Meta.TimeZone = "CET"
 	}
 
 	v2 := v.Sub("lineup")
@@ -197,16 +193,36 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 		c.BotNoDataAvailableYet = "⚠️ No data available yet ⚠️"
 	}
 
-	c.BeginningScheduleString = v.GetString("beginningSchedule")
-	if c.BeginningScheduleString == "" {
-		errorString += "Missing beginningSchedule\n"
+	loc, err := time.LoadLocation(c.Meta.TimeZone)
+	if err != nil {
+		errorString += err.Error()
 	} else {
-		c.Lineup.BeginningSchedule, err = dateparse.ParseLocal(c.BeginningScheduleString)
-		if err != nil {
-			errorString += err.Error()
-		}
-		c.Meta.BeginningSchedule = c.Lineup.BeginningSchedule
+		time.Local = loc // -> this is setting the global timezone
 	}
+
+	beginningSchedule, err := dateparse.ParseLocal(v.GetString("beginningSchedule"))
+	if err != nil {
+		if !c.Demo {
+			errorString += "Error on beginningSchedule\n" + err.Error()
+		}
+	} else {
+		c.Lineup.BeginningSchedule = beginningSchedule
+	}
+
+	if c.Demo {
+		now := time.Now().AddDate(0, 0, -1)
+		c.Lineup.BeginningSchedule = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		log.Warn().Msg(fmt.Sprintf("demo mode, forcing BeginningSchedule to %v", c.Lineup.BeginningSchedule))
+	}
+
+	c.Meta.BeginningSchedule = c.Lineup.BeginningSchedule
+
+	cetLocation, err := time.LoadLocation(c.Meta.TimeZone)
+	if err != nil {
+		errorString += err.Error()
+	}
+	cetTime := c.Lineup.BeginningSchedule.In(cetLocation)
+	c.BeginningSchedule = cetTime.Format(time.RFC3339)
 
 	if errorString != "" {
 		return nil, errors.New(errorString)

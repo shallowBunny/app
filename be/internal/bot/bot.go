@@ -400,6 +400,13 @@ func (b *Bot) SendEvents() {
 			}
 		}
 		time.Sleep(1 * time.Second)
+
+		if b.config.Demo {
+			if b.RootLineUp.AllSetsFinished() {
+
+				panic("demo mode and all sets finished")
+			}
+		}
 	}
 }
 
@@ -434,7 +441,7 @@ func (b *Bot) DeleteUser(chatId int64) error {
 
 func (b *Bot) ShowRoom(chatId int64, lineup *lineUp.LineUp, index int) string {
 	if b.magicRoomButton {
-		b.users.SetLastShownRoom(chatId, (index+1)%len(b.config.Lineup.Rooms))
+		b.users.UpdateMagicButtons(chatId, index, len(b.config.Lineup.Rooms))
 	}
 	return lineup.Print(b.config.Meta.RoomYouAreHereEmoticon, b.config.Lineup.Rooms[index])
 }
@@ -862,20 +869,20 @@ func (b Bot) GetButtonsForUser(chatId int64) []string {
 		return nil
 	}
 	buttons := []string{}
+	log.Trace().Msg(fmt.Sprintf("buttons <%v>", b.config.Buttons))
 
-	for _, v := range b.config.Buttons {
-		if b.magicRoomButton {
-			if v == helpCommand {
-				lastShown := b.users.GetLastShownRoom(chatId)
+	buttons = append(buttons, b.config.Buttons...)
 
-				if lastShown >= len(b.roomsEmoticons) {
-					lastShown = 0
-				}
-				buttons = append(buttons, b.roomsEmoticons[lastShown])
-			}
+	if b.magicRoomButton {
+		b1, b2 := b.users.GetMagicButtons(chatId)
+		if b1 < len(b.roomsEmoticons) {
+			buttons = append(buttons, b.roomsEmoticons[b1])
 		}
-		buttons = append(buttons, v)
+		if b2 < len(b.roomsEmoticons) {
+			buttons = append(buttons, b.roomsEmoticons[b2])
+		}
 	}
+
 	log.Trace().Msg(fmt.Sprintf("rooms emoticons <%v>", b.roomsEmoticons))
 
 	hasUserNotifications, err := b.users.HasUserNotifications(chatId)

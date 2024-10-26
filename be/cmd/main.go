@@ -108,14 +108,6 @@ func runRestartScript(runRestartScriptArg string) (string, error) {
 
 func main() {
 
-	loc, err := time.LoadLocation("CET")
-	if err != nil {
-		log.Error().Msg(err.Error())
-		panic("ok")
-	}
-	// handle err
-	time.Local = loc // -> this is setting the global timezone
-
 	configFileArg := flag.String("config", "", "use given config file")
 	checkConfig := flag.Bool("check", false, "check config")
 	restartScriptArg := flag.String("script", "", "restart script")

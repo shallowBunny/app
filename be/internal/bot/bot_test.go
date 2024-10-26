@@ -29,13 +29,17 @@ const (
 	adminID int64 = -123
 )
 
+var (
+	timeTests = time.Date(time.Now().Year()+1, 1, 1, 0, 0, 0, 0, time.Local)
+)
+
 func TestSerialisation(t *testing.T) {
 	config, err := config.New("../../configs/bot_test.yaml", false)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 
-	tt := time.Now()
+	tt := timeTests
 	log.Debug().Msg("TestSerialisation")
 
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
@@ -81,7 +85,7 @@ func TestEvents(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	tt := time.Now()
+	tt := timeTests
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
 	config.Lineup.BeginningSchedule = currentTime
 
@@ -143,7 +147,7 @@ func TestInputMergeAndRebase(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	tt := time.Now()
+	tt := timeTests
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
 	config.Lineup.BeginningSchedule = currentTime
 	log.Debug().Msg(fmt.Sprintf("using currentTime = %v", currentTime))
@@ -275,7 +279,8 @@ func TestInputMultipleMergeAndRebase(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	tt := time.Now()
+	tt := timeTests
+
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
 	config.Lineup.BeginningSchedule = currentTime
 	log.Debug().Msg(fmt.Sprintf("using currentTime = %v", currentTime))
@@ -400,7 +405,7 @@ func TestUpdateLineUp(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	tt := time.Now()
+	tt := timeTests
 
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
 	c.Lineup.BeginningSchedule = currentTime

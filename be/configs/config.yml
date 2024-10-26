@@ -1,22 +1,23 @@
 secrets:
  modos: [ ]
  port: 8084
+ demo: true
 
-beginningSchedule: 'Fri Aug 16 2025'
+beginningSchedule: 'Sun Oct 6 2024'
 botMotd: 'Hello, this is a demo bot.  Click one of the buttons below. If you type a room name, bunny will show its program. If you type something else, it will try to find sets matching that DJ.
 '
 
 meta:
- aboutBigIcon:  "demo-icon.jpg"
- aboutShowShallowBunnyIcon: true
- aboutShowSisyDuckIcon: true
+ aboutBigIcon:  "demo-icon.webp"
+ aboutShowShallowBunnyIcon: false
+ aboutShowSisyDuckIcon: false
  botUrl: "https://t.me/festivalDemoBot"
- nowMapImage: ""
+ nowMapImage: "demo-map.webp"
  nowShowDataSourceAd: false
  nowShowShallowBunnyAd: false
  nowShowSisyDuckAd: false
  nowSubmitPR: ""
- nowTextAfterMap: "This is a demo festival"
+ nowTextAfterMap: "This is a demo festival for shallowbunny.com"
  nowTextWhenFinished: "Demo finished"
  mobileAppName: "demo app"
  prefix: "demo"
@@ -30,679 +31,1230 @@ readSetsFromRedisOnRestart: false
 botAllowInput: true
 nowSkipClosed: false
 
-
 lineup:
-    rooms:
-        - "⌛ Zeitmaschine"
-        - "🌾 Mühle"
-        - "🏎 Turbo Tüff"
-        - "🛵 Furore"
-        - "🛺 Rave Rikscha"
-        - "🤡 Jesterfield"
-    sets:
-        "🌾 Mühle":
-            - day: 0
-              duration: 150
-              dj: Fid Codo
-              hour: 17
-              minute: 0
-            - day: 0
-              duration: 120
-              dj: Kotoe
-              hour: 19
-              minute: 30
-            - day: 0
-              duration: 120
-              dj: Mwaah
-              hour: 21
-              minute: 30
-            - day: 0
-              duration: 120
-              dj: Maka
-              hour: 23
-              minute: 30
-            - day: 1
-              duration: 120
-              dj: Laberg
-              hour: 1
-              minute: 30
-            - day: 1
-              duration: 120
-              dj: Luxon
-              hour: 3
-              minute: 30
-            - day: 1
-              duration: 120
-              dj: Felidae
-              hour: 12
-              minute: 30
-            - day: 1
-              duration: 120
-              dj: P
-              hour: 14
-              minute: 30
-            - day: 1
-              duration: 120
-              dj: Julius Jung
-              hour: 16
-              minute: 30
-            - day: 1
-              duration: 120
-              dj: Lisa Luka
-              hour: 18
-              minute: 30
-            - day: 1
-              duration: 120
-              dj: Damon Jee
-              hour: 20
-              minute: 30
-            - day: 1
-              duration: 120
-              dj: Diladi
-              hour: 22
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Judith Van Waterkant
-              hour: 0
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Isabeau Fort
-              hour: 2
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Taotik Sayeth Disco
-              hour: 4
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Onory
-              hour: 6
-              minute: 30
-            - day: 2
-              duration: 90
-              dj: Lazy Hazy
-              hour: 8
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Schwirri
-              hour: 10
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: C2C Aka Die Claras
-              hour: 12
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Rosa Kante
-              hour: 14
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Anna Almani
-              hour: 16
-              minute: 0
-            - day: 2
-              duration: 150
-              dj: Melbo & Falke
-              hour: 18
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Frieda Karlsson
-              hour: 20
-              minute: 30
-            - day: 2
-              duration: 90
-              dj: Reyneke
-              hour: 22
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: Käptn 12 & Düsen Trieb
-              hour: 0
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Rufus Rabatz
-              hour: 2
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Lisa Von Mond
-              hour: 4
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Sörös
-              hour: 6
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Barti
-              hour: 8
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Ella
-              hour: 10
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Patte & Klatte
-              hour: 12
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Marc Fuhrmann
-              hour: 14
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Maria Die Ruhe
-              hour: 16
-              minute: 0
-            - day: 3
-              duration: 90
-              dj: Deep Andi
-              hour: 18
-              minute: 0
-            - day: 3
-              duration: 150
-              dj: Oberst & Buchner
-              hour: 19
-              minute: 30
-        "🏎 Turbo Tüff":
-            - day: 0
-              duration: 150
-              dj: Maurin
-              hour: 22
-              minute: 0
-            - day: 1
-              duration: 120
-              dj: Schmucko + Fate & Spinnebatz
-              hour: 0
-              minute: 30
-            - day: 1
-              duration: 120
-              dj: Poloralph & Lutz Vuitton
-              hour: 2
-              minute: 30
-            - day: 1
-              duration: 120
-              dj: Mango
-              hour: 4
-              minute: 30
-            - day: 1
-              duration: 150
-              dj: Sire Jonah
-              hour: 22
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Ben Derri
-              hour: 0
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Choreophila
-              hour: 2
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Hardschwoof 5000
-              hour: 4
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Felgenteufel666
-              hour: 6
-              minute: 30
-            - day: 2
-              duration: 150
-              dj: Hannah Hansen B2B DLZ
-              hour: 22
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Zweistein
-              hour: 0
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: Melanchromie
-              hour: 2
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: TNT
-              hour: 4
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: Spicy Swelts
-              hour: 6
-              minute: 30
-        "🛵 Furore":
-            - day: 0
-              duration: 120
-              dj: Langschlenderer
-              hour: 18
-              minute: 30
-            - day: 0
-              duration: 120
-              dj: Na Glaaaa... Das Songquiz
-              hour: 20
-              minute: 30
-            - day: 0
-              duration: 60
-              dj: Kaos
-              hour: 22
-              minute: 30
-            - day: 1
-              duration: 60
-              dj: Ende September
-              hour: 0
-              minute: 0
-            - day: 1
-              duration: 180
-              dj: Queere Märchenstunde + Gräfin Zobel Set
-              hour: 14
-              minute: 0
-            - day: 1
-              duration: 120
-              dj: DJ Quien
-              hour: 17
-              minute: 0
-            - day: 1
-              duration: 60
-              dj: Organi ???
-              hour: 19
-              minute: 0
-            - day: 1
-              duration: 120
-              dj: Chaos Caraoke Club
-              hour: 20
-              minute: 30
-            - day: 1
-              duration: 60
-              dj: Satisire
-              hour: 23
-              minute: 0
-            - day: 2
-              duration: 90
-              dj: Gest
-              hour: 0
-              minute: 0
-            - day: 2
-              duration: 150
-              dj: Re:Set
-              hour: 1
-              minute: 30
-            - day: 2
-              duration: 30
-              dj: ???
-              hour: 13
-              minute: 30
-            - day: 2
-              duration: 150
-              dj: Bingo Brudis
-              hour: 14
-              minute: 0
-            - day: 2
-              duration: 60
-              dj: Rabayah
-              hour: 17
-              minute: 30
-            - day: 2
-              duration: 60
-              dj: Mike Martin
-              hour: 18
-              minute: 30
-            - day: 2
-              duration: 90
-              dj: The Razzones
-              hour: 20
-              minute: 0
-            - day: 2
-              duration: 90
-              dj: Kite
-              hour: 21
-              minute: 30
-            - day: 2
-              duration: 90
-              dj: Ugly-Dub
-              hour: 23
-              minute: 0
-            - day: 3
-              duration: 150
-              dj: Matryoschka
-              hour: 0
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: Boba Ved
-              hour: 3
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Hot Wlan (Calm)
-              hour: 14
-              minute: 0
-            - day: 3
-              duration: 60
-              dj: The Dropdown Menu
-              hour: 16
-              minute: 30
-            - day: 3
-              duration: 90
-              dj: Surprise
-              hour: 17
-              minute: 30
-            - day: 3
-              duration: 60
-              dj: Rimojeki
-              hour: 19
-              minute: 30
-        "🛺 Rave Rikscha":
-            - day: 0
-              duration: 120
-              dj: Simon Simono
-              hour: 20
-              minute: 0
-            - day: 0
-              duration: 120
-              dj: Secret
-              hour: 22
-              minute: 0
-            - day: 1
-              duration: 120
-              dj: Garnele
-              hour: 11
-              minute: 0
-            - day: 1
-              duration: 150
-              dj: Zimt & Zucker
-              hour: 13
-              minute: 0
-            - day: 1
-              duration: 150
-              dj: Lea Chuga
-              hour: 15
-              minute: 30
-            - day: 1
-              duration: 120
-              dj: Wiebke
-              hour: 18
-              minute: 0
-            - day: 1
-              duration: 120
-              dj: Pony-Barker
-              hour: 20
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Kosh
-              hour: 8
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Phillinger
-              hour: 10
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Tones Mahones
-              hour: 12
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Francesca B2B Maria Theresia Von Eberg
-              hour: 14
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Tamtoomi
-              hour: 16
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Okrim
-              hour: 18
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Frequency w/ Haana Peony
-              hour: 20
-              minute: 0
-            - day: 3
-              duration: 150
-              dj: Mella Mara
-              hour: 8
-              minute: 0
-            - day: 3
-              duration: 150
-              dj: Anja Anique
-              hour: 10
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: Baerbel B2B Trauma Mia
-              hour: 13
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Lisa Filou
-              hour: 15
-              minute: 0
-            - day: 3
-              duration: 120
-              dj: Vacant
-              hour: 17
-              minute: 0
-        "🤡 Jesterfield":
-            - day: 1
-              duration: 60
-              dj: Malaika
-              hour: 16
-              minute: 0
-            - day: 1
-              duration: 60
-              dj: Jawatnu
-              hour: 17
-              minute: 30
-            - day: 1
-              duration: 60
-              dj: Sanes Medicine
-              hour: 19
-              minute: 0
-            - day: 1
-              duration: 60
-              dj: Mosk P
-              hour: 20
-              minute: 30
-            - day: 1
-              duration: 60
-              dj: Kristina Quarter
-              hour: 22
-              minute: 0
-            - day: 1
-              duration: 180
-              dj: Jam Session
-              hour: 23
-              minute: 0
-            - day: 2
-              duration: 60
-              dj: Atmo Sounds - Sera Lee
-              hour: 13
-              minute: 0
-            - day: 2
-              duration: 90
-              dj: Ein Feld Voller Narren
-              hour: 14
-              minute: 0
-            - day: 2
-              duration: 30
-              dj: Jack Jesterfield
-              hour: 15
-              minute: 30
-            - day: 2
-              duration: 60
-              dj: Gouche Flustir
-              hour: 16
-              minute: 0
-            - day: 2
-              duration: 60
-              dj: Theo Gillian & Sera Lee
-              hour: 17
-              minute: 0
-            - day: 2
-              duration: 90
-              dj: Bunte Tute
-              hour: 18
-              minute: 0
-            - day: 2
-              duration: 30
-              dj: Benjamin ???
-              hour: 20
-              minute: 0
-            - day: 2
-              duration: 60
-              dj: Ora Blu
-              hour: 21
-              minute: 0
-            - day: 2
-              duration: 60
-              dj: Sabraabb
-              hour: 22
-              minute: 30
-            - day: 3
-              duration: 180
-              dj: Jam Session
-              hour: 0
-              minute: 30
-            - day: 3
-              duration: 90
-              dj: Ein Feld Voller Narren
-              hour: 14
-              minute: 0
-            - day: 3
-              duration: 60
-              dj: ???
-              hour: 15
-              minute: 30
-            - day: 3
-              duration: 300
-              dj: Jamboree
-              hour: 17
-              minute: 0
-        "⌛ Zeitmaschine":
-            - day: 1
-              duration: 120
-              dj: Marmori
-              hour: 16
-              minute: 0
-            - day: 1
-              duration: 120
-              dj: Anice & Daniel Schumann
-              hour: 18
-              minute: 0
-            - day: 1
-              duration: 120
-              dj: Sascha M & Munkler
-              hour: 20
-              minute: 0
-            - day: 1
-              duration: 90
-              dj: Peter Großkreutz
-              hour: 22
-              minute: 0
-            - day: 1
-              duration: 120
-              dj: Lotte Laut
-              hour: 23
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Rad.lez
-              hour: 1
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Yobovski
-              hour: 3
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Phauna
-              hour: 5
-              minute: 30
-            - day: 2
-              duration: 150
-              dj: Katzengold
-              hour: 15
-              minute: 0
-            - day: 2
-              duration: 120
-              dj: Stan Starry & Mona Moore
-              hour: 17
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Naicet & Elias Goldmund
-              hour: 19
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Tom Baker
-              hour: 21
-              minute: 30
-            - day: 2
-              duration: 120
-              dj: Aka Nina
-              hour: 23
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: Flanko
-              hour: 1
-              minute: 30
-            - day: 3
-              duration: 60
-              dj: Fabian Laute
-              hour: 3
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: Empro
-              hour: 4
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: Tudse
-              hour: 6
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: Herr Zinnober
-              hour: 13
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: Intaktogene
-              hour: 15
-              minute: 30
-            - day: 3
-              duration: 120
-              dj: Marco Liebreiz
-              hour: 17
-              minute: 30
-            - day: 3
-              duration: 90
-              dj: Stimming
-              hour: 19
-              minute: 30
+  rooms:
+    - "🧙 Mystic ground"  
+    - ⌛ Zeitmaschine
+    - "\U0001F33E Mühle"
+    - "\U0001F3CE Turbo Tüff"
+    - "\U0001F6F5 Furore"
+    - "\U0001F6FA Rave Rikscha"
+    - "\U0001F921 Jesterfield"
+    - "🌲 Freaky Forest"
+  sets:
+    "🧙 Mystic ground":
+      - day: 0
+        dj: Vogti
+        hour: 17
+        minute: 0
+      - day: 0
+        dj: SYN3K
+        hour: 19
+        minute: 0
+      - day: 0
+        dj: Konfusia
+        hour: 20
+        minute: 30
+      - day: 0
+        dj: Jan Oberlaender
+        hour: 22
+        minute: 30
+      - day: 1
+        dj: Space 92
+        hour: 0
+        minute: 30
+      - day: 1
+        dj: Maurice Mino & sin:port
+        hour: 2
+        minute: 30
+      - day: 1
+        dj: TiM TASTE
+        hour: 4
+        minute: 30
+        duration: 120
+      - day: 1
+        dj: Zweisamt
+        hour: 14
+        minute: 0
+      - day: 1
+        dj: Ezio Aguiar
+        hour: 16
+        minute: 0
+      - day: 1
+        dj: Elias Doré
+        hour: 17
+        minute: 30
+      - day: 1
+        dj: Stan Kolev
+        hour: 19
+        minute: 30
+      - day: 1
+        dj: Pauli Pocket
+        hour: 21
+        minute: 30
+      - day: 1
+        dj: Pleasure Island
+        hour: 23
+        minute: 30
+      - day: 2
+        dj: Carbon
+        hour: 1
+        minute: 30
+      - day: 2
+        dj: Aio
+        hour: 3
+        minute: 30
+      - day: 2
+        dj: Atlantik
+        hour: 5
+        minute: 30
+        duration: 90
+      - day: 2
+        dj: WAYHNA
+        hour: 13
+        minute: 0
+      - day: 2
+        dj: She Knows
+        hour: 15
+        minute: 0
+      - day: 2
+        dj: Just Emma
+        hour: 16
+        minute: 30
+      - day: 2
+        dj: Extrawelt
+        hour: 18
+        minute: 30
+      - day: 2
+        dj: Elias Goldmund
+        hour: 20
+        minute: 0
+      - day: 2
+        dj: Township Rebellion
+        hour: 22
+        minute: 0
+      - day: 3
+        dj: Kalayo Fire Crew
+        hour: 0
+        minute: 0
+        duration: 60        
+    "🧌 Creatures Corner": 
+      - day: 0
+        dj: Rotkäppchen Candy
+        hour: 15
+        minute: 0
+      - day: 0
+        dj: Eloiß
+        hour: 17
+        minute: 0
+      - day: 0
+        dj: Acado
+        hour: 18
+        minute: 30
+      - day: 0
+        dj: Überhaupt & Außerdem
+        hour: 20
+        minute: 0
+      - day: 0
+        dj: Corios
+        hour: 22
+        minute: 0
+      - day: 0
+        dj: le.fu
+        hour: 23
+        minute: 30
+      - day: 1
+        dj: Max Marlon
+        hour: 1
+        minute: 0
+      - day: 1
+        dj: Kotterzür
+        hour: 2
+        minute: 30
+      - day: 1
+        dj: Tadoh
+        hour: 4
+        minute: 30
+      - day: 1
+        dj: Deep Ändi
+        hour: 6
+        minute: 0
+      - day: 1
+        dj: Christian Hülshoff
+        hour: 7
+        minute: 0
+      - day: 1
+        dj: Herrhausen & Treindl
+        hour: 8
+        minute: 0
+      - day: 1
+        dj: Seyde
+        hour: 9
+        minute: 0
+      - day: 1
+        dj: Robinson Schmuso
+        hour: 10
+        minute: 0
+      - day: 1
+        dj: Pacaya
+        hour: 11
+        minute: 30
+      - day: 1
+        dj: Lotte Ahoi
+        hour: 13
+        minute: 0
+      - day: 1
+        dj: Martha van Straaten
+        hour: 15
+        minute: 0
+      - day: 1
+        dj: Pulli & Chomba
+        hour: 17
+        minute: 0
+      - day: 1
+        dj: Horst Haller
+        hour: 19
+        minute: 0
+      - day: 1
+        dj: Käptin 12 & Düsentrieb
+        hour: 20
+        minute: 30
+      - day: 1
+        dj: Flave
+        hour: 22
+        minute: 30
+      - day: 1
+        dj: Frida Darko
+        hour: 23
+        minute: 30
+      - day: 2
+        dj: UREM
+        hour: 1
+        minute: 30        
+      - day: 2
+        dj: R3NATA
+        hour: 3
+        minute: 30
+      - day: 2
+        dj: Kapoor
+        hour: 5
+        minute: 0
+      - day: 2
+        dj: Ninze & Niju
+        hour: 7
+        minute: 0
+      - day: 2
+        dj: WOJTEK
+        hour: 9
+        minute: 0
+      - day: 2
+        dj: Lazy Lórres
+        hour: 10
+        minute: 0
+      - day: 2
+        dj: Late Night Jockel Session with HuGs
+        hour: 11
+        minute: 30
+      - day: 2
+        dj: Heimlich Knüller
+        hour: 13
+        minute: 30
+      - day: 2
+        dj: Kahl & Karmena
+        hour: 15
+        minute: 30
+      - day: 2
+        dj: Caleesi & Sarah Kreis
+        hour: 17
+        minute: 30
+      - day: 2
+        dj: Mira
+        hour: 19
+        minute: 30
+      - day: 2
+        dj: Tvisker
+        hour: 21
+        minute: 30
+      - day: 2
+        dj: Nico Tober
+        hour: 23
+        minute: 0
+      - day: 3
+        dj: "[Lu:wes] b2b RenA aka [ais]"
+        hour: 0
+        minute: 30
+      - day: 3
+        dj: Najesh & Artïsoko
+        hour: 2
+        minute: 0
+      - day: 3
+        dj: Pia Pan & Heyoka
+        hour: 4
+        minute: 0
+      - day: 3
+        dj: Nugi & Kollektiv Sheesh
+        hour: 6
+        minute: 0
+      - day: 3
+        dj: Lemonella
+        hour: 8
+        minute: 0
+      - day: 3
+        dj: neoBeo
+        hour: 10
+        minute: 0
+      - day: 3
+        dj: Trippin Jaguar
+        hour: 12
+        minute: 0
+      - day: 3
+        dj: Zen Baboon
+        hour: 14
+        minute: 0
+        duration: 120
+    "🌲 Freaky Forest":
+      - day: 0
+        dj: Jungspund
+        hour: 20
+        minute: 0
+      - day: 0
+        dj: Diladi
+        hour: 22
+        minute: 0
+      - day: 0
+        dj: Blake Strange
+        hour: 23
+        minute: 30
+      - day: 1
+        dj: Joseph Disco
+        hour: 1
+        minute: 0
+      - day: 1
+        dj: Kolja Broxi
+        hour: 3
+        minute: 0
+      - day: 1
+        dj: Marco Liebreiz
+        hour: 4
+        minute: 30
+      - day: 1
+        dj: LaBerg
+        hour: 6
+        minute: 0
+      - day: 1
+        dj: Tonda
+        hour: 7
+        minute: 30
+      - day: 1
+        dj: Rakäthe
+        hour: 9
+        minute: 0
+      - day: 1
+        dj: Babes2bass
+        hour: 10
+        minute: 30
+      - day: 1
+        dj: The One Million Butt Show
+        hour: 12
+        minute: 30
+      - day: 1
+        dj: Lisa Filou
+        hour: 14
+        minute: 30
+      - day: 1
+        dj: Schwirri
+        hour: 16
+        minute: 0
+      - day: 1
+        dj: BARTi
+        hour: 17
+        minute: 30
+      - day: 1
+        dj: Schmackofatz & Spinneratz
+        hour: 19
+        minute: 0
+      - day: 1
+        dj: Flanko
+        hour: 21
+        minute: 0
+      - day: 1
+        dj: Taberia
+        hour: 23
+        minute: 0
+      - day: 2
+        dj: Sabura
+        hour: 0
+        minute: 30
+      - day: 2
+        dj: Onory
+        hour: 2
+        minute: 30
+      - day: 2
+        dj: Phauna
+        hour: 4
+        minute: 0
+      - day: 2
+        dj: Sörös
+        hour: 5
+        minute: 30
+      - day: 2
+        dj: Savethedisco
+        hour: 7
+        minute: 30
+      - day: 2
+        dj: Secret
+        hour: 9
+        minute: 0
+      - day: 2
+        dj: Langstrumpf
+        hour: 10
+        minute: 30
+      - day: 2
+        dj: Zhart
+        hour: 12
+        minute: 0
+      - day: 2
+        dj: Lazy Hazy
+        hour: 13
+        minute: 30
+      - day: 2
+        dj: Taqtik
+        hour: 15
+        minute: 0
+      - day: 2
+        dj: Bisu b2b MaKa
+        hour: 17
+        minute: 0
+      - day: 2
+        dj: Melbo & Falke
+        hour: 19
+        minute: 0
+      - day: 2
+        dj: Pilocka Krach
+        hour: 21
+        minute: 0
+      - day: 2
+        dj: SILSAN
+        hour: 23
+        minute: 0
+      - day: 3
+        dj: Yooni
+        hour: 0
+        minute: 30
+      - day: 3
+        dj: SIRU
+        hour: 2
+        minute: 0
+      - day: 3
+        dj: Mira Vána
+        hour: 3
+        minute: 30
+      - day: 3
+        dj: Planet Caravan
+        hour: 5
+        minute: 0
+      - day: 3
+        dj: Antaares
+        hour: 6
+        minute: 30
+        duration: 60
+    ⌛ Zeitmaschine:
+      - day: 1
+        duration: 120
+        dj: Marmori
+        hour: 16
+        minute: 0
+        links: []
+      - day: 1
+        duration: 120
+        dj: Anice & Daniel Schumann
+        hour: 18
+        minute: 0
+        links: []
+      - day: 1
+        duration: 120
+        dj: Sascha M & Munkler
+        hour: 20
+        minute: 0
+        links: []
+      - day: 1
+        duration: 90
+        dj: Peter Großkreutz
+        hour: 22
+        minute: 0
+        links: []
+      - day: 1
+        duration: 120
+        dj: Lotte Laut
+        hour: 23
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Rad.lez
+        hour: 1
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Yobovski
+        hour: 3
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Phauna
+        hour: 5
+        minute: 30
+        links: []
+      - day: 2
+        duration: 150
+        dj: Katzengold
+        hour: 15
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Stan Starry & Mona Moore
+        hour: 17
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Naicet
+        hour: 19
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Tom Baker
+        hour: 21
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Aka Nina
+        hour: 23
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: Flanko
+        hour: 1
+        minute: 30
+        links: []
+      - day: 3
+        duration: 60
+        dj: Fabian Laute
+        hour: 3
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: Empro
+        hour: 4
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: Tudse
+        hour: 6
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: Herr Zinnober
+        hour: 13
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: Intaktogene
+        hour: 15
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: Marco Liebreiz
+        hour: 17
+        minute: 30
+        links: []
+      - day: 3
+        duration: 90
+        dj: Stimming
+        hour: 19
+        minute: 30
+        links: []
+    "\U0001F33E Mühle":
+      - day: 0
+        duration: 150
+        dj: Fid Codo
+        hour: 17
+        minute: 0
+        links: []
+      - day: 0
+        duration: 120
+        dj: Kotoe
+        hour: 19
+        minute: 30
+        links: []
+      - day: 0
+        duration: 120
+        dj: Mwaah
+        hour: 21
+        minute: 30
+        links: []
+      - day: 0
+        duration: 120
+        dj: Maka
+        hour: 23
+        minute: 30
+        links: []
+      - day: 1
+        duration: 120
+        dj: Laberg
+        hour: 1
+        minute: 30
+        links: []
+      - day: 1
+        duration: 120
+        dj: Luxon
+        hour: 3
+        minute: 30
+        links: []
+      - day: 1
+        duration: 120
+        dj: Felidae
+        hour: 12
+        minute: 30
+        links: []
+      - day: 1
+        duration: 120
+        dj: P
+        hour: 14
+        minute: 30
+        links: []
+      - day: 1
+        duration: 120
+        dj: Julius Jung
+        hour: 16
+        minute: 30
+        links: []
+      - day: 1
+        duration: 120
+        dj: Lisa Luka
+        hour: 18
+        minute: 30
+        links: []
+      - day: 1
+        duration: 120
+        dj: Damon Jee
+        hour: 20
+        minute: 30
+        links: []
+      - day: 1
+        duration: 120
+        dj: Diladi
+        hour: 22
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Judith Van Waterkant
+        hour: 0
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Isabeau Fort
+        hour: 2
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Taotik Sayeth Disco
+        hour: 4
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Onory
+        hour: 6
+        minute: 30
+        links: []
+      - day: 2
+        duration: 90
+        dj: Lazy Hazy
+        hour: 8
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Schwirri
+        hour: 10
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: C2C Aka Die Claras
+        hour: 12
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Rosa Kante
+        hour: 14
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Anna Almani
+        hour: 16
+        minute: 0
+        links: []
+      - day: 2
+        duration: 150
+        dj: Melbo & Falke
+        hour: 18
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Frieda Karlsson
+        hour: 20
+        minute: 30
+        links: []
+      - day: 2
+        duration: 90
+        dj: Reyneke
+        hour: 22
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: Käptn 12 & Düsen Trieb
+        hour: 0
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Rufus Rabatz
+        hour: 2
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Lisa Von Mond
+        hour: 4
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Sörös
+        hour: 6
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Barti
+        hour: 8
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Ella
+        hour: 10
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Patte & Klatte
+        hour: 12
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Marc Fuhrmann
+        hour: 14
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Maria Die Ruhe
+        hour: 16
+        minute: 0
+        links: []
+      - day: 3
+        duration: 90
+        dj: Deep Andi
+        hour: 18
+        minute: 0
+        links: []
+      - day: 3
+        duration: 150
+        dj: Oberst & Buchner
+        hour: 19
+        minute: 30
+        links: []
+    "\U0001F3CE Turbo Tüff":
+      - day: 0
+        duration: 150
+        dj: Maurin
+        hour: 22
+        minute: 0
+        links: []
+      - day: 1
+        duration: 120
+        dj: Schmucko + Fate & Spinnebatz
+        hour: 0
+        minute: 30
+        links: []
+      - day: 1
+        duration: 120
+        dj: Poloralph & Lutz Vuitton
+        hour: 2
+        minute: 30
+        links: []
+      - day: 1
+        duration: 120
+        dj: Mango
+        hour: 4
+        minute: 30
+        links: []
+      - day: 1
+        duration: 150
+        dj: Sire Jonah
+        hour: 22
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Ben Derri
+        hour: 0
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Choreophila
+        hour: 2
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Hardschwoof 5000
+        hour: 4
+        minute: 30
+        links: []
+      - day: 2
+        duration: 120
+        dj: Felgenteufel666
+        hour: 6
+        minute: 30
+        links: []
+      - day: 2
+        duration: 150
+        dj: Hannah Hansen B2B DLZ
+        hour: 22
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Zweistein
+        hour: 0
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: Melanchromie
+        hour: 2
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: TNT
+        hour: 4
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: Spicy Swelts
+        hour: 6
+        minute: 30
+        links: []
+    "\U0001F6F5 Furore":
+      - day: 0
+        duration: 120
+        dj: Langschlenderer
+        hour: 18
+        minute: 30
+        links: []
+      - day: 0
+        duration: 120
+        dj: Na Glaaaa... Das Songquiz
+        hour: 20
+        minute: 30
+        links: []
+      - day: 0
+        duration: 60
+        dj: Kaos
+        hour: 22
+        minute: 30
+        links: []
+      - day: 1
+        duration: 60
+        dj: Ende September
+        hour: 0
+        minute: 0
+        links: []
+      - day: 1
+        duration: 180
+        dj: Queere Märchenstunde + Gräfin Zobel Set
+        hour: 14
+        minute: 0
+        links: []
+      - day: 1
+        duration: 120
+        dj: DJ Quien
+        hour: 17
+        minute: 0
+        links: []
+      - day: 1
+        duration: 60
+        dj: Organi
+        hour: 19
+        minute: 0
+        links: []
+      - day: 1
+        duration: 120
+        dj: Chaos Caraoke Club
+        hour: 20
+        minute: 30
+        links: []
+      - day: 1
+        duration: 60
+        dj: Satisire
+        hour: 23
+        minute: 0
+        links: []
+      - day: 2
+        duration: 90
+        dj: Gest
+        hour: 0
+        minute: 0
+        links: []
+      - day: 2
+        duration: 150
+        dj: Re:Set
+        hour: 1
+        minute: 30
+        links: []
+      - day: 2
+        duration: 30
+        dj: Progonda
+        hour: 13
+        minute: 30
+        links: []
+      - day: 2
+        duration: 150
+        dj: Bingo Brudis
+        hour: 14
+        minute: 0
+        links: []
+      - day: 2
+        duration: 60
+        dj: Rabayah
+        hour: 17
+        minute: 30
+        links: []
+      - day: 2
+        duration: 60
+        dj: Mike Martin
+        hour: 18
+        minute: 30
+        links: []
+      - day: 2
+        duration: 90
+        dj: The Razzones
+        hour: 20
+        minute: 0
+        links: []
+      - day: 2
+        duration: 90
+        dj: Kite
+        hour: 21
+        minute: 30
+        links: []
+      - day: 2
+        duration: 90
+        dj: Ugly-Dub
+        hour: 23
+        minute: 0
+        links: []
+      - day: 3
+        duration: 150
+        dj: Matryoschka
+        hour: 0
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: Boba Ved
+        hour: 3
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Hot Wlan (Calm)
+        hour: 14
+        minute: 0
+        links: []
+      - day: 3
+        duration: 60
+        dj: The Dropdown Menu
+        hour: 16
+        minute: 30
+        links: []
+      - day: 3
+        duration: 90
+        dj: Surprise
+        hour: 17
+        minute: 30
+        links: []
+      - day: 3
+        duration: 60
+        dj: Rimojeki
+        hour: 19
+        minute: 30
+        links: []
+    "\U0001F6FA Rave Rikscha":
+      - day: 0
+        duration: 120
+        dj: Simon Simono
+        hour: 20
+        minute: 0
+        links: []
+      - day: 0
+        duration: 120
+        dj: Secret
+        hour: 22
+        minute: 0
+        links: []
+      - day: 1
+        duration: 120
+        dj: Garnele
+        hour: 11
+        minute: 0
+        links: []
+      - day: 1
+        duration: 150
+        dj: Zimt & Zucker
+        hour: 13
+        minute: 0
+        links: []
+      - day: 1
+        duration: 150
+        dj: Lea Chuga
+        hour: 15
+        minute: 30
+        links: []
+      - day: 1
+        duration: 120
+        dj: Wiebke
+        hour: 18
+        minute: 0
+        links: []
+      - day: 1
+        duration: 120
+        dj: Pony-Barker
+        hour: 20
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Kosh
+        hour: 8
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Phillinger
+        hour: 10
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Tones Mahones
+        hour: 12
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Francesca B2B Maria Theresia Von Eberg
+        hour: 14
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Tamtoomi
+        hour: 16
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Okrim
+        hour: 18
+        minute: 0
+        links: []
+      - day: 2
+        duration: 120
+        dj: Frequency w/ Haana Peony
+        hour: 20
+        minute: 0
+        links: []
+      - day: 3
+        duration: 150
+        dj: Mella Mara
+        hour: 8
+        minute: 0
+        links: []
+      - day: 3
+        duration: 150
+        dj: Anja Anique
+        hour: 10
+        minute: 30
+        links: []
+      - day: 3
+        duration: 120
+        dj: Baerbel B2B Trauma Mia
+        hour: 13
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Lisa Filou
+        hour: 15
+        minute: 0
+        links: []
+      - day: 3
+        duration: 120
+        dj: Vacant
+        hour: 17
+        minute: 0
+        links: []
+    "\U0001F921 Jesterfield":
+      - day: 1
+        duration: 60
+        dj: Malaika
+        hour: 16
+        minute: 0
+        links: []
+      - day: 1
+        duration: 60
+        dj: Jawatnu
+        hour: 17
+        minute: 30
+        links: []
+      - day: 1
+        duration: 60
+        dj: Sanes Medicine
+        hour: 19
+        minute: 0
+        links: []
+      - day: 1
+        duration: 60
+        dj: Mosk P
+        hour: 20
+        minute: 30
+        links: []
+      - day: 1
+        duration: 60
+        dj: Kristina Quarter
+        hour: 22
+        minute: 0
+        links: []
+      - day: 1
+        duration: 180
+        dj: Jam Session
+        hour: 23
+        minute: 0
+        links: []
+      - day: 2
+        duration: 60
+        dj: Atmo Sounds - Sera Lee
+        hour: 13
+        minute: 0
+        links: []
+      - day: 2
+        duration: 90
+        dj: Ein Feld Voller Narren
+        hour: 14
+        minute: 0
+        links: []
+      - day: 2
+        duration: 30
+        dj: Jack Jesterfield
+        hour: 15
+        minute: 30
+        links: []
+      - day: 2
+        duration: 60
+        dj: Gouche Flustir
+        hour: 16
+        minute: 0
+        links: []
+      - day: 2
+        duration: 60
+        dj: Theo Gillian & Sera Lee
+        hour: 17
+        minute: 0
+        links: []
+      - day: 2
+        duration: 90
+        dj: Bunte Tute
+        hour: 18
+        minute: 0
+        links: []
+      - day: 2
+        duration: 30
+        dj: Benjamin
+        hour: 20
+        minute: 0
+        links: []
+      - day: 2
+        duration: 60
+        dj: Ora Blu
+        hour: 21
+        minute: 0
+        links: []
+      - day: 2
+        duration: 60
+        dj: Sabraabb
+        hour: 22
+        minute: 30
+        links: []
+      - day: 3
+        duration: 180
+        dj: Jam Session
+        hour: 0
+        minute: 30
+        links: []
+      - day: 3
+        duration: 90
+        dj: Ein Feld Voller Narren
+        hour: 14
+        minute: 0
+        links: []
+      - day: 3
+        duration: 60
+        dj: Bitchslop
+        hour: 15
+        minute: 30
+        links: []
+      - day: 3
+        duration: 300
+        dj: Jamboree
+        hour: 17
+        minute: 0
+        links: []
+
+

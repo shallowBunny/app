@@ -150,6 +150,7 @@ func (l LineUp) GetSetsAndDurations() string {
 	// Add the total number of sets and total duration across all rooms
 	result.WriteString(fmt.Sprintf("Total number of sets: %d\n", totalSets))
 	result.WriteString(fmt.Sprintf("Total duration across all rooms: %d minutes\n", totalDuration))
+	result.WriteString(fmt.Sprintf("BeginningSchedule: %v\n", l.config.BeginningSchedule))
 
 	return result.String()
 }
@@ -250,13 +251,15 @@ func (l *LineUp) InputCommand(chatID int64, commandOrArg string) (*LineUp, Input
 
 func (l *LineUp) NewSet(djName string, room string, day int, hour int, min int, duration int, links []string) Set {
 	t := l.config.Lineup.BeginningSchedule
+	// Start by setting the base date and time
 	t1 := time.Date(t.Year(), t.Month(), t.Day(), hour, min, t.Second(), t.Nanosecond(), t.Location())
-	t1 = t1.Add(time.Duration((int(time.Hour) * 24 * day)))
+	// Add days using AddDate for correct handling of daylight saving time transitions
+	t1 = t1.AddDate(0, 0, day)
 
 	set := Set{
 		Dj:    djName,
 		Start: t1,
-		End:   t1.Add(time.Duration((int(time.Minute) * duration))),
+		End:   t1.Add(time.Duration(int(time.Minute) * duration)),
 		Room:  room,
 		Links: links,
 	}
@@ -565,11 +568,21 @@ func (l LineUp) PrintForMerge(filterNomSalle string) string {
 	return res
 }
 
+func (l LineUp) AllSetsFinished() bool {
+	current := time.Now()
+	for _, v := range l.Sets {
+		if v.End.After(current) {
+			return false
+		}
+	}
+	return true
+}
+
 func (l LineUp) Print(youAreHere string, filterNomSalle string) string {
 	current := time.Now()
 	s := []Set{}
 	var oldData bool = true
-	var oldLineupMessage = l.config.BotOldLineupMessage
+	var oldLineupMessage = "\n" + l.config.BotOldLineupMessage
 	for _, v := range l.Sets {
 		if v.End.After(current) {
 			oldLineupMessage = ""
