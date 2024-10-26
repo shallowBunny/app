@@ -1,4 +1,3 @@
-// Layout.tsx
 import React, { useEffect, useState, Suspense, lazy } from "react";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import {
@@ -20,9 +19,10 @@ import { Now } from "@/components/ui/Now";
 import { useQuery } from "@tanstack/react-query";
 import { queryOptions } from "../lib/queryConfig";
 import { Data, Like } from "../lib/types";
-import { allSetsInPastAndFinishedMoreThanXHoursAgo } from "../lib/setUtils";
+import { allSetsInPastAndFinishedMoreThanXHoursAgo } from "../lib/sets";
 import useCurrentMinute from "../hooks/useCurrentMinute";
 import { loadImageAsync } from "../lib/loadImage";
+import { PacmanLoader } from "react-spinners";
 
 // Lazy load RoomPage
 const RoomPage = lazy(() => import("./RoomPage"));
@@ -40,22 +40,21 @@ const Layout: React.FC = () => {
 	const [isStandalone, setIsStandalone] = useState<boolean>(false); // State for isStandalone
 	const [areAllSetsInPast, setAreAllSetsInPast] = useState<boolean>(false); // State to track if all sets are in the past
 	const currentMinute = useCurrentMinute(); // Use the custom hook
+	const [showLoadingModal, setShowLoadingModal] = useState(true); // New state for loading modal
 
 	// Add likedDJs state
 	const [likedDJs, setLikedDJs] = useState<Like[]>([]);
 
 	// Load likedDJs from localStorage on mount
-
 	useEffect(() => {
 		const storedLikedDJs = localStorage.getItem("likedDJs");
 		if (storedLikedDJs) {
 			try {
 				const parsedLikedDJs = JSON.parse(storedLikedDJs) as Like[];
-				// Convert beginningSchedule back to a Date object
 				const likedDJsWithDates = parsedLikedDJs.map((like) => ({
 					...like,
-					beginningSchedule: new Date(like.beginningSchedule), // Convert string to Date
-					started: new Date(like.started), // Convert string to Date
+					beginningSchedule: new Date(like.beginningSchedule),
+					started: new Date(like.started),
 				}));
 				setLikedDJs(likedDJsWithDates);
 			} catch (e) {
@@ -125,6 +124,12 @@ const Layout: React.FC = () => {
 	}, []);
 
 	useEffect(() => {
+		if (!isLoading && data) {
+			setShowLoadingModal(false); // Hide modal once data is loaded
+		}
+	}, [isLoading, data]);
+
+	useEffect(() => {
 		if (data) {
 			const appleIcon = `${data.meta.prefix}`;
 			setAppleTouchIcon(appleIcon);
@@ -144,7 +149,6 @@ const Layout: React.FC = () => {
 			}
 			setAreAllSetsInPast(allSetsPast);
 
-			// Set the initial selected room
 			if (selectedRoom === "" && data?.sets?.length > 0) {
 				const lastSet = data.sets[data.sets.length - 1];
 				if (lastSet) {
@@ -154,27 +158,31 @@ const Layout: React.FC = () => {
 		}
 	}, [data]);
 
-	if (isLoading) return <div className="bg-[#222123] fixed inset-0"></div>;
 	if (error)
 		return (
 			<div className="bg-[#222123] fixed inset-0 flex justify-center items-center">
 				<div className="bg-[#2e2c2f] p-8 rounded-lg shadow-lg text-white max-w-lg text-center">
 					<h1 className="text-2xl font-bold mb-4">☠️</h1>
 					<p className="mb-4">{error.message}</p>
-					<p className="text-sm text-gray-300">
-						When you download the app to your homescreen, you need to run it
-						once with an internet connection. After that, it will be able to
-						work offline.
-					</p>
 				</div>
 			</div>
 		);
-	if (!data || !data.sets)
+
+	if (showLoadingModal) {
+		return (
+			<div className="fixed inset-0 flex items-center justify-center bg-opacity-80 z-50">
+				<PacmanLoader color="yellow" size={20} />{" "}
+			</div>
+		);
+	}
+
+	if (!data || !data.sets) {
 		return (
 			<div className="bg-[#222123] fixed inset-0 text-white">
 				No data available
 			</div>
 		);
+	}
 
 	return (
 		<HelmetProvider>

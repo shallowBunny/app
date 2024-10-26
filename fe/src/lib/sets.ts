@@ -1,4 +1,4 @@
-// src/lib/setUtils.ts
+// src/lib/sets.ts
 
 import { Set } from "./types";
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { Like } from "../../lib/types";
+import { formatDate, formatDayAndTime } from "../../lib/time"; // Import the time functions
 
 interface LikesProps {
 	likes: Like[];
@@ -23,34 +24,58 @@ const Likes: React.FC<LikesProps> = ({ likes }) => {
 				</a>
 			);
 		}
-		return like.dj;
+		return <span className="dj-name">{like.dj}</span>;
 	};
+
+	let previousSchedule = ""; // Track the previous beginningSchedule
 
 	return (
 		<div className="likes-container">
-			<h2 className="text-[25px] mb-3">
-				<span className="text-[18px]">❤️</span> Likes
-			</h2>
 			<ul className="text-[18px] mb-4">
-				{likes.map((like, index) => (
-					<li key={index} className="likes-items">
-						🤍 {renderDJName(like)} {like.room}
-						{like.title !== "Sisyphos" && ` - ${like.title}`} -{" "}
-						{formatDate(like.started)}
-					</li>
-				))}
+				{likes.map((like, index) => {
+					const currentSchedule = formatDate(like.beginningSchedule);
+
+					// Compare current and previous schedule and render extra line when they differ
+					const shouldRenderScheduleChange =
+						previousSchedule !== currentSchedule;
+
+					// Update the previousSchedule before rendering the extra line
+					previousSchedule = currentSchedule;
+
+					return (
+						<React.Fragment key={index}>
+							{/* Render the schedule change line when the schedule changes */}
+							{shouldRenderScheduleChange && (
+								<>
+									<li className="separator-line" style={{ margin: "5px 0" }}>
+										{" "}
+									</li>
+									<li className="likes-schedule-change  flex items-start">
+										<span className="text-[20px] mr-2 flex-shrink-0">❤️</span>
+										<span>
+											{like.title} {currentSchedule}
+										</span>
+									</li>
+									<li className="separator-line" style={{ margin: "5px 0" }}>
+										{" "}
+									</li>
+								</>
+							)}
+
+							{/* Render the likes items */}
+							<li className="likes-items flex items-start">
+								<span className="text-[18px] mr-2 flex-shrink-0">🤍</span>
+								<span>
+									{renderDJName(like)}, {formatDayAndTime(like.started)} in{" "}
+									{like.room}
+								</span>
+							</li>
+						</React.Fragment>
+					);
+				})}
 			</ul>
 		</div>
 	);
-};
-
-const formatDate = (date: Date): string => {
-	const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-	const dayName = days[date.getDay()];
-	const day = date.getDate().toString().padStart(2, "0");
-	const month = (date.getMonth() + 1).toString().padStart(2, "0");
-	const year = date.getFullYear().toString().slice(-2); // Get last two digits of the year
-	return `${dayName} ${day}/${month}/${year}`;
 };
 
 export default Likes;

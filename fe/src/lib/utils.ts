@@ -61,7 +61,7 @@ export function getOverriddenCurrentTime(): Date {
 	*/
 }
 
-const formatTimeForClosedStages = (date: Date): string => {
+const formatForClosedStages = (date: Date, dj: string): string => {
 	const today = getOverriddenCurrentTime();
 	const isToday =
 		date.getDate() === today.getDate() &&
@@ -78,11 +78,20 @@ const formatTimeForClosedStages = (date: Date): string => {
 
 	const time = date.toLocaleTimeString("en-GB", optionsTime);
 
-	if (isToday) {
-		return ` at ${time}`;
+	if (dj === "?") {
+		if (isToday) {
+			return `🚫 closed until ${time}`;
+		} else {
+			const day = date.toLocaleDateString("en-GB", optionsDay);
+			return `🚫 closed until ${day} at ${time}`;
+		}
 	} else {
-		const day = date.toLocaleDateString("en-GB", optionsDay);
-		return `, ${day} at ${time}`;
+		if (isToday) {
+			return `🚫 closed (${dj} at ${time})`;
+		} else {
+			const day = date.toLocaleDateString("en-GB", optionsDay);
+			return `🚫 closed (${dj}, ${day} at ${time})`;
+		}
 	}
 };
 
@@ -152,7 +161,7 @@ export function convertRoomSetsToRoomSituation(
 				situation += ` (Closing${currentEndTime})`;
 			} else if (sets.next) {
 				const nextStartTime = new Date(sets.next.start);
-				situation += `🚫 closed (${sets.next.dj}${formatTimeForClosedStages(nextStartTime)})`;
+				situation += formatForClosedStages(nextStartTime, sets.next.dj);
 				closed = true;
 			} else {
 				situation += `🚫 closed`;

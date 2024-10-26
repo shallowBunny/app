@@ -64,6 +64,7 @@
 		"react-helmet-async": "^2.0.5",
 		"react-hook-form": "^7.52.2",
 		"react-i18next": "^15.0.1",
+		"react-spinners": "^0.14.1",
 		"tailwind-merge": "^2.5.2",
 		"tailwindcss-animate": "^1.0.7",
 		"vaul": "^0.9.1",

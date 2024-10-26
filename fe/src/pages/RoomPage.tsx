@@ -34,7 +34,9 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 		);
 	}
 
-	let uniqueRooms = [...data.meta.rooms].reverse();
+	let uniqueRooms = [...data.meta.rooms]
+		.reverse()
+		.filter((room) => data.sets.some((set) => set.room === room));
 
 	const iconsAreSmall = uniqueRooms.length > 10;
 	const youarehere = data.meta.roomYouAreHereEmoticon;

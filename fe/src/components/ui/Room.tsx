@@ -1,8 +1,5 @@
 // Room.tsx
-import {
-	groupSetsByDayAndTime,
-	shouldSkipYouAreHereInsertion,
-} from "@/lib/setUtils";
+import { groupSetsByDayAndTime } from "@/lib/sets";
 
 import { Set, Like } from "@/lib/types"; // Import the Like type
 
@@ -45,22 +42,23 @@ const isDjLiked = (djName: string, likedDJs: Like[]): boolean => {
 	return likedDJs.some((like) => like.dj === djName);
 };
 
-const addClosingOrClosedSets = (sets: Set[], currentTime: Date): Set[] => {
+const addClosingAndClosedSets = (sets: Set[], currentTime: Date): Set[] => {
 	const updatedSets: Set[] = [];
 
-	// Loop through the sets to check for gaps
 	for (let i = 0; i < sets.length; i++) {
 		const currentSet = sets[i];
 		const nextSet = sets[i + 1];
 
 		// Add the current set to the updated list if it exists
-		currentSet && updatedSets.push(currentSet);
+		if (currentSet) {
+			updatedSets.push(currentSet);
+		}
 
+		// If there's a gap between the current set's end and the next set's start
 		if (nextSet && currentSet) {
 			const currentSetEndTime = new Date(currentSet.end).getTime();
 			const nextSetStartTime = new Date(nextSet.start).getTime();
 
-			// If there's a gap between the current set's end and the next set's start
 			if (currentSetEndTime < nextSetStartTime) {
 				const closingSet: Set = {
 					room: currentSet.room,
@@ -76,59 +74,62 @@ const addClosingOrClosedSets = (sets: Set[], currentTime: Date): Set[] => {
 		}
 	}
 
+	// If there's only one set or we're at the end of the set list, add a "closed" set
+	const lastSet = sets[sets.length - 1];
+	if (lastSet) {
+		const lastSetEndTime = new Date(lastSet.end).getTime();
+
+		// Add a "closed" set if the last set has ended and it's later than the current time
+		const closedSet: Set = {
+			room: lastSet.room,
+			start: lastSet.end,
+			end: lastSet.end, //new Date(currentTime.setHours(23, 59, 59)), // Set to end of the current day
+			dj: lastSetEndTime < currentTime.getTime() ? "closed" : "closing",
+			links: [""],
+		};
+
+		updatedSets.push(closedSet);
+	}
+
 	return updatedSets;
 };
 
-const shouldInsertBeforeNextDayMarker = (
-	youAreHereInserted: boolean,
+const addYouAreHereSet = (
+	sets: Set[],
 	currentTime: Date,
-	groupedSets: Record<string, Set[]>,
-	sortedDays: string[],
-	dayIndex: number
-): boolean => {
-	if (youAreHereInserted || dayIndex >= sortedDays.length - 1) {
-		return false;
+	youAreHere: string
+): Set[] => {
+	// Check if there's any set that starts or ends today
+	const isSetToday = sets.some((set) => {
+		const setStart = new Date(set.start);
+		const setEnd = new Date(set.end);
+
+		// Compare dates (ignoring time)
+		return (
+			setStart.toDateString() === currentTime.toDateString() ||
+			setEnd.toDateString() === currentTime.toDateString()
+		);
+	});
+
+	// If no set starts or finishes today, don't add "you are here"
+	if (!isSetToday) {
+		return sets;
 	}
 
-	const currentDay = sortedDays[dayIndex];
-	const nextDay = sortedDays[dayIndex + 1];
+	// Otherwise, add the "you are here" set
+	const updatedSets: Set[] = [...sets];
+	const youAreHereSet: Set = {
+		room: sets[0]?.room || "Unknown room", // Default to first room or "Unknown"
+		start: currentTime,
+		end: currentTime,
+		dj: youAreHere,
+		links: [""],
+	};
 
-	if (
-		!currentDay ||
-		!nextDay ||
-		!groupedSets[currentDay] ||
-		!groupedSets[nextDay] ||
-		groupedSets[nextDay].length === 0
-	) {
-		return false;
-	}
+	updatedSets.push(youAreHereSet);
 
-	const currentDaySets = groupedSets[currentDay];
-	const lastSetOfCurrentDay = currentDaySets[currentDaySets.length - 1];
-
-	if (!lastSetOfCurrentDay) {
-		return false;
-	}
-
-	const nextDayFirstSet = groupedSets[nextDay][0];
-	if (!nextDayFirstSet) {
-		return false;
-	}
-
-	const lastSetEndTime = new Date(lastSetOfCurrentDay.start).getTime();
-	const nextDayFirstSetTime = new Date(nextDayFirstSet.start).getTime();
-
-	const currentDayStillValid =
-		currentTime.getDate() === new Date(lastSetOfCurrentDay.start).getDate() &&
-		currentTime.getMonth() === new Date(lastSetOfCurrentDay.start).getMonth() &&
-		currentTime.getFullYear() ===
-			new Date(lastSetOfCurrentDay.start).getFullYear();
-
-	return (
-		currentDayStillValid &&
-		currentTime.getTime() > lastSetEndTime &&
-		currentTime.getTime() < nextDayFirstSetTime
-	);
+	// The sorting logic will automatically place it in the correct spot
+	return updatedSets;
 };
 
 const isSetOngoingNow = (sets: Set[]): boolean => {
@@ -149,12 +150,17 @@ const isSetOngoingNow = (sets: Set[]): boolean => {
 const Room = (props: RoomProps) => {
 	const { sets, room, youarehere, currentMinute, likedDJs } = props; // Destructure likedDJs (array)
 
-	const mergedSets = addClosingOrClosedSets(
+	const mergedSets = addClosingAndClosedSets(
 		mergeMissingDataSets(sets),
 		currentMinute
 	);
+	const finalSets = addYouAreHereSet(
+		mergedSets,
+		currentMinute,
+		youarehere + " ← you are here"
+	);
 
-	const groupedSets = groupSetsByDayAndTime(mergedSets);
+	const groupedSets = groupSetsByDayAndTime(finalSets);
 
 	// Sort the days chronologically
 	const sortedDays = Object.keys(groupedSets).sort((a, b) => {
@@ -171,54 +177,6 @@ const Room = (props: RoomProps) => {
 
 	const currentTime = new Date();
 
-	let youAreHereInserted = shouldSkipYouAreHereInsertion(sets, currentTime);
-
-	// Find the last set of the last day
-	const lastDay =
-		sortedDays.length > 0 ? sortedDays[sortedDays.length - 1] : null;
-	const lastSetOfLastDay =
-		lastDay && groupedSets[lastDay]
-			? groupedSets[lastDay][groupedSets[lastDay].length - 1]
-			: null;
-
-	const insertYouAreHereMarker = (setTime: Date): boolean => {
-		if (!youAreHereInserted && setTime > currentTime) {
-			if (!lastSetOfLastDay || currentTime < new Date(lastSetOfLastDay.end)) {
-				return true;
-			}
-		}
-		return false;
-	};
-
-	const renderClosingOrClosed = () => {
-		if (lastSetOfLastDay) {
-			return (
-				<h2 className="text-[18px]">
-					{new Date(lastSetOfLastDay.end).toLocaleTimeString("en-GB", {
-						hour: "2-digit",
-						minute: "2-digit",
-					})}{" "}
-					<span className="italic">
-						{new Date(lastSetOfLastDay.end) < currentTime
-							? "closed"
-							: "closing"}
-					</span>
-				</h2>
-			);
-		}
-		return null;
-	};
-
-	const renderYouAreHere = () => (
-		<h2 className="text-[18px]">
-			{currentMinute.toLocaleTimeString("en-GB", {
-				hour: "2-digit",
-				minute: "2-digit",
-			})}{" "}
-			{youarehere} &larr; you are here
-		</h2>
-	);
-
 	return (
 		<>
 			<div>
@@ -226,7 +184,7 @@ const Room = (props: RoomProps) => {
 					{room}
 					{roomTag}
 				</h2>
-				{sortedDays.map((day, dayIndex) => {
+				{sortedDays.map((day) => {
 					const setsForDay = groupedSets[day];
 					if (!setsForDay) return null;
 
@@ -244,32 +202,9 @@ const Room = (props: RoomProps) => {
 							<br />
 							<h2 className="text-[20px]">{isToday ? "Today" : day}:</h2>
 							<ul>
-								{setsForDay.map((set, index) => {
-									const setTime = new Date(set.start);
-									const isCurrentDay =
-										setTime.getDate() === currentTime.getDate() &&
-										setTime.getMonth() === currentTime.getMonth() &&
-										setTime.getFullYear() === currentTime.getFullYear();
-
-									const shouldInsertYouAreHereMarker =
-										insertYouAreHereMarker(setTime);
-
+								{setsForDay.map((set) => {
 									return (
 										<div key={`${set.dj}-${set.start}`}>
-											{shouldInsertYouAreHereMarker && (
-												<>
-													<li key="you-are-here">
-														<h2 className="text-[18px]">
-															{currentMinute.toLocaleTimeString("en-GB", {
-																hour: "2-digit",
-																minute: "2-digit",
-															})}{" "}
-															{youarehere} &larr; you are here
-														</h2>
-													</li>
-													{(youAreHereInserted = true)}
-												</>
-											)}
 											{set.dj === "closed" || set.dj === "closing" ? (
 												<li
 													key={`${set.dj}-${set.start}`}
@@ -294,59 +229,13 @@ const Room = (props: RoomProps) => {
 													{isDjLiked(set.dj, likedDJs) && <span> ❤️</span>}
 												</li>
 											)}
-											{index === setsForDay.length - 1 &&
-												isCurrentDay &&
-												!youAreHereInserted &&
-												insertYouAreHereMarker(setTime) && (
-													<>
-														<li key="you-are-here-end">
-															<h2 className="text-[18px]">
-																{currentMinute.toLocaleTimeString("en-GB", {
-																	hour: "2-digit",
-																	minute: "2-digit",
-																})}{" "}
-																{youarehere} &larr; you are here
-															</h2>
-															{(youAreHereInserted = true)}
-														</li>
-													</>
-												)}
 										</div>
 									);
 								})}
-								{shouldInsertBeforeNextDayMarker(
-									youAreHereInserted,
-									currentTime,
-									groupedSets,
-									sortedDays,
-									dayIndex
-								) && (
-									<>
-										<li key="you-are-here-before-next-day">
-											<h2 className="text-[18px]">
-												{currentMinute.toLocaleTimeString("en-GB", {
-													hour: "2-digit",
-													minute: "2-digit",
-												})}{" "}
-												{youarehere} &larr; you are here
-											</h2>
-											{(youAreHereInserted = true)}
-										</li>
-									</>
-								)}
 							</ul>
 						</div>
 					);
 				})}
-				{lastSetOfLastDay && (
-					<div>
-						{new Date(lastSetOfLastDay.end) < currentTime &&
-							renderClosingOrClosed()}
-						{!youAreHereInserted && renderYouAreHere()}
-						{new Date(lastSetOfLastDay.end) >= currentTime &&
-							renderClosingOrClosed()}
-					</div>
-				)}
 			</div>
 		</>
 	);

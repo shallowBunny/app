@@ -97,19 +97,21 @@ export const Now: FunctionComponent<NowProps> = ({
 								<span>{situation.situation}</span>
 								{/* Show heart and make it clickable */}
 								{like && (
-									<span
-										className="ml-2 cursor-pointer"
-										onClick={() => toggleLike(like)}
-									>
-										{likedDJs.some(
-											(existingLike) =>
-												existingLike.dj === like.dj &&
-												existingLike.beginningSchedule.getTime() ===
-													like.beginningSchedule.getTime()
-										)
-											? "❤️"
-											: "🤍"}{" "}
-										{/* Show filled or empty heart */}
+									<span className="ml-2" onClick={() => toggleLike(like)}>
+										<span
+											className="cursor-pointer p-2 -m-1 inline-block"
+											style={{ touchAction: "manipulation" }}
+										>
+											{likedDJs.some(
+												(existingLike) =>
+													existingLike.dj === like.dj &&
+													existingLike.beginningSchedule.getTime() ===
+														like.beginningSchedule.getTime()
+											)
+												? "❤️"
+												: "🤍"}{" "}
+											{/* Show filled or empty heart */}
+										</span>
 									</span>
 								)}
 							</li>
