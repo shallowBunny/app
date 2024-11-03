@@ -51,7 +51,8 @@ export const Now: FunctionComponent<NowProps> = ({
 				(existingLike) =>
 					existingLike.dj === like.dj &&
 					existingLike.beginningSchedule.getTime() ===
-						like.beginningSchedule.getTime()
+						like.beginningSchedule.getTime() &&
+					existingLike.room === like.room
 			);
 
 			if (isLiked) {
@@ -60,7 +61,8 @@ export const Now: FunctionComponent<NowProps> = ({
 					(existingLike) =>
 						existingLike.dj !== like.dj ||
 						existingLike.beginningSchedule.getTime() !==
-							like.beginningSchedule.getTime()
+							like.beginningSchedule.getTime() ||
+						existingLike.room !== like.room
 				);
 			} else {
 				// If the DJ is not liked, add the new Like object
@@ -106,7 +108,8 @@ export const Now: FunctionComponent<NowProps> = ({
 												(existingLike) =>
 													existingLike.dj === like.dj &&
 													existingLike.beginningSchedule.getTime() ===
-														like.beginningSchedule.getTime()
+														like.beginningSchedule.getTime() &&
+													existingLike.room === like.room
 											)
 												? "❤️"
 												: "🤍"}{" "}

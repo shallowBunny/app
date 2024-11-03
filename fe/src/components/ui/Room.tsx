@@ -9,6 +9,7 @@ interface RoomProps {
 	youarehere: string;
 	currentMinute: Date;
 	likedDJs: Like[]; // Use an array of Like objects instead of a map
+	isStandalone: boolean;
 }
 
 const mergeMissingDataSets = (sets: Set[]): Set[] => {
@@ -65,7 +66,7 @@ const addClosingAndClosedSets = (sets: Set[], currentTime: Date): Set[] => {
 					start: currentSet.end,
 					end: nextSet.start,
 					dj: currentSetEndTime < currentTime.getTime() ? "closed" : "closing",
-					links: [""],
+					meta: null,
 				};
 
 				// Add the closing/closed set during the gap
@@ -85,7 +86,7 @@ const addClosingAndClosedSets = (sets: Set[], currentTime: Date): Set[] => {
 			start: lastSet.end,
 			end: lastSet.end, //new Date(currentTime.setHours(23, 59, 59)), // Set to end of the current day
 			dj: lastSetEndTime < currentTime.getTime() ? "closed" : "closing",
-			links: [""],
+			meta: null,
 		};
 
 		updatedSets.push(closedSet);
@@ -123,7 +124,7 @@ const addYouAreHereSet = (
 		start: currentTime,
 		end: currentTime,
 		dj: youAreHere,
-		links: [""],
+		meta: null,
 	};
 
 	updatedSets.push(youAreHereSet);

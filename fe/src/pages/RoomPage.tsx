@@ -113,6 +113,7 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 										sets={data.sets.filter((set) => set.room === room)}
 										currentMinute={currentMinute}
 										likedDJs={likedDJs} // Pass likedDJs as a prop
+										isStandalone={isStandalone}
 									/>
 									<div className="h-20"></div>
 								</div>

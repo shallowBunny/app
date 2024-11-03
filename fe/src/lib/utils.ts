@@ -150,7 +150,8 @@ export function convertRoomSetsToRoomSituation(
 				beginningSchedule: meta.beginningSchedule, // Get beginningSchedule from meta
 				room: sets.current.room,
 				started: sets.current.start,
-				links: sets.current.links,
+				meta: sets.current.meta,
+				links: [""], //TODO REMOVE
 			};
 			closed = false; // The room is open if there's a current DJ
 		}

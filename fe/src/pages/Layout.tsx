@@ -51,11 +51,33 @@ const Layout: React.FC = () => {
 		if (storedLikedDJs) {
 			try {
 				const parsedLikedDJs = JSON.parse(storedLikedDJs) as Like[];
-				const likedDJsWithDates = parsedLikedDJs.map((like) => ({
-					...like,
-					beginningSchedule: new Date(like.beginningSchedule),
-					started: new Date(like.started),
-				}));
+				const likedDJsWithDates = parsedLikedDJs.map((like) => {
+					// Migrate if `links` exists and `meta` is empty
+					if (
+						like.links &&
+						like.links.length > 0 &&
+						(!like.meta || like.meta.length === 0)
+					) {
+						const [linkValue] = like.links; // Get the string value from links array
+						if (like.dj !== "?") {
+							like.meta = [
+								{
+									key: `dj.link.sisyfan.${like.dj}`,
+									value: linkValue,
+								},
+							];
+						}
+						// TODO	like.links = [""]; // Clear the links array
+						console.log("migrating " + like.meta);
+					}
+
+					return {
+						...like,
+						beginningSchedule: new Date(like.beginningSchedule),
+						started: new Date(like.started),
+						meta: like.meta || [],
+					};
+				});
 				setLikedDJs(likedDJsWithDates);
 			} catch (e) {
 				console.error("Failed to parse likedDJs from localStorage:", e);

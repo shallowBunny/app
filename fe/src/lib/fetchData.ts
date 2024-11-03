@@ -30,7 +30,7 @@ export async function fetchData(): Promise<Data> {
 					room: item.room,
 					start,
 					end,
-					links: item.links || [],
+					meta: item.meta,
 				};
 			}),
 			meta: {

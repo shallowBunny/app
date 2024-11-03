@@ -1,11 +1,16 @@
 export type FunctionComponent = React.ReactElement | null;
 
+export interface SetMeta {
+	key: string;
+	value: string;
+}
+
 export interface Set {
 	dj: string;
 	room: string;
 	start: Date;
 	end: Date;
-	links: [string];
+	meta: SetMeta[] | null;
 }
 
 export interface Meta {
@@ -39,7 +44,8 @@ export interface Like {
 	beginningSchedule: Date;
 	room: string;
 	started: Date;
-	links: [string];
+	meta: SetMeta[] | null;
+	links: [string]; // to remove
 }
 export interface RoomSituation {
 	room: string;
