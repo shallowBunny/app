@@ -226,9 +226,9 @@ func TestFindDJ(t *testing.T) {
 	day := time.Now().Add(time.Hour * 24 * 3).Format("Monday")
 
 	inputTest := []test{
-		{input: "Robyn", want: searchedMessage + "✅ Robyn Schulkowsky & Gebrüder Teichmann is playing " + day + " at 18:00 in roomA\n"},
-		{input: "Cacaboudin", want: searchedMessage + "Not found. 😔\n"},
-		{input: "Robin", want: searchedMessage + "✅ Robyn Schulkowsky & Gebrüder Teichmann is playing " + day + " at 18:00 in roomA\n"},
+		{input: "Robyn", want: searchedMessage1 + "Robyn" + searchedMessage2 + "✅ Robyn Schulkowsky & Gebrüder Teichmann is playing " + day + " at 18:00 in roomA\n" + searchedMessage3},
+		{input: "Cacaboudin", want: searchedMessage1 + "Cacaboudin" + searchedMessage2 + searchedMessageNotFound + searchedMessage3},
+		{input: "Robin", want: searchedMessage1 + "Robin" + searchedMessage2 + "✅ Robyn Schulkowsky & Gebrüder Teichmann is playing " + day + " at 18:00 in roomA\n" + searchedMessage3},
 	}
 
 	for _, tc := range inputTest {

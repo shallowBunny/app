@@ -60,12 +60,17 @@ type Config struct {
 }
 
 type Set struct {
-	Day      int      `yaml:"day" json:"day"`
-	Duration int      `yaml:"duration" json:"duration"`
-	Dj       string   `yaml:"dj" json:"dj"`
-	Hour     int      `yaml:"hour" json:"hour"`
-	Minute   int      `yaml:"minute" json:"minute"`
-	Links    []string `yaml:"links" json:"links"`
+	Day      int       `yaml:"day" json:"day"`
+	Duration int       `yaml:"duration" json:"duration"`
+	Dj       string    `yaml:"dj" json:"dj"`
+	Hour     int       `yaml:"hour" json:"hour"`
+	Minute   int       `yaml:"minute" json:"minute"`
+	Meta     []SetMeta `yaml:"meta" json:"meta"`
+}
+
+type SetMeta struct {
+	Key   string `yaml:"key" json:"key"`
+	Value string `yaml:"value" json:"value"`
 }
 
 type Lineup struct {

@@ -17,11 +17,11 @@ import (
 )
 
 type Set struct {
-	Dj    string    `json:"dj"`
-	Start time.Time `json:"start"`
-	End   time.Time `json:"end"`
-	Room  string    `json:"room"`
-	Links []string  `json:"links"`
+	Dj    string           `json:"dj"`
+	Start time.Time        `json:"start"`
+	End   time.Time        `json:"end"`
+	Room  string           `json:"room"`
+	Meta  []config.SetMeta `json:"meta"`
 }
 
 type Event struct {
@@ -53,11 +53,14 @@ const (
 	noDataRoom  = "⚠️ no data"
 	openedFloor = "✅"
 	//noData              = "⚠️ No data available yet ⚠️"
-	missingData         = "\n\n⚠️ Some data is missing ⚠️"
-	here                = " <- you are here"
-	minSizeDJSearch     = 2
-	minSizeDJSearchText = "Enter more than 2 characters for searching a DJ.\n"
-	searchedMessage     = "Searched in DJ sets:\n"
+	missingData             = "\n\n⚠️ Some data is missing ⚠️"
+	here                    = " <- you are here"
+	minSizeDJSearch         = 2
+	minSizeDJSearchText     = "Enter more than 2 characters for searching a DJ.\n"
+	searchedMessage1        = "Searching <"
+	searchedMessage2        = "> in DJ sets:\n"
+	searchedMessage3        = "\nPlease click the buttons bellow to use the bot... 🧐\n"
+	searchedMessageNotFound = "Not found. 😔\n"
 )
 
 func (l LineUp) DuplicateLineUp() *LineUp {
@@ -95,7 +98,7 @@ func New(config *config.Config) *LineUp {
 		}
 
 		for _, s := range sets {
-			msg := lineUp.AddSet(lineUp.NewSet(s.Dj, room, s.Day, s.Hour, s.Minute, s.Duration, s.Links))
+			msg := lineUp.AddSet(lineUp.NewSet(s.Dj, room, s.Day, s.Hour, s.Minute, s.Duration, s.Meta))
 			if msg != "" {
 				log.Error().Msg(msg)
 			}
@@ -249,7 +252,7 @@ func (l *LineUp) InputCommand(chatID int64, commandOrArg string) (*LineUp, Input
 	return newLineup, res
 }
 
-func (l *LineUp) NewSet(djName string, room string, day int, hour int, min int, duration int, links []string) Set {
+func (l *LineUp) NewSet(djName string, room string, day int, hour int, min int, duration int, meta []config.SetMeta) Set {
 	t := l.config.Lineup.BeginningSchedule
 	// Start by setting the base date and time
 	t1 := time.Date(t.Year(), t.Month(), t.Day(), hour, min, t.Second(), t.Nanosecond(), t.Location())
@@ -261,12 +264,26 @@ func (l *LineUp) NewSet(djName string, room string, day int, hour int, min int, 
 		Start: t1,
 		End:   t1.Add(time.Duration(int(time.Minute) * duration)),
 		Room:  room,
-		Links: links,
+		Meta:  meta,
 	}
 	return set
 }
 
 func filterNonASCIIAndSpaces(input string) string {
+	filtered := make([]rune, 0, len(input))
+	for _, r := range input {
+		if r <= unicode.MaxASCII && !unicode.IsSpace(r) {
+			filtered = append(filtered, r)
+		} else {
+			if !unicode.IsSpace(r) {
+				filtered = append(filtered, '?')
+			}
+		}
+	}
+	return string(filtered)
+}
+
+func filterNonASCIIAndSpacesRoom(input string) string {
 	filtered := make([]rune, 0, len(input))
 	for _, r := range input {
 		if r <= unicode.MaxASCII && !unicode.IsSpace(r) {
@@ -277,14 +294,14 @@ func filterNonASCIIAndSpaces(input string) string {
 }
 
 func (l *LineUp) FindRoom(source string, distanceMaxRoom int) (int, string) {
-	source = strings.ToUpper(filterNonASCIIAndSpaces(source))
+	source = strings.ToUpper(filterNonASCIIAndSpacesRoom(source))
 
 	minDistance := distanceMaxRoom + 1
 	room := ""
 	indexRoom := 0
 
 	for i, v := range l.config.Lineup.Rooms {
-		target := strings.ToUpper(filterNonASCIIAndSpaces(v))
+		target := strings.ToUpper(filterNonASCIIAndSpacesRoom(v))
 		distance := levenshtein.DistanceForStrings([]rune(source), []rune(target), levenshtein.DefaultOptions)
 		if distance <= distanceMaxRoom {
 			if distance < minDistance {
@@ -300,14 +317,14 @@ func (l *LineUp) FindRoom(source string, distanceMaxRoom int) (int, string) {
 func (l *LineUp) FindDJ(i string, when time.Time) string {
 
 	if len(i) <= minSizeDJSearch {
-		return minSizeDJSearchText
+		return minSizeDJSearchText + searchedMessage3
 	}
 
 	targets := strings.Fields(i)
 	founds := make(map[string]bool)
 	res := ""
 	found := false
-	for distance := 1; distance < 7; distance++ {
+	for distance := 1; distance < 4; distance++ {
 		for _, vv := range targets {
 			target := strings.ToUpper(filterNonASCIIAndSpaces(vv))
 			for _, vv := range l.Sets {
@@ -320,7 +337,21 @@ func (l *LineUp) FindDJ(i string, when time.Time) string {
 						continue
 					}
 					source = strings.ToUpper(filterNonASCIIAndSpaces(source))
-					d := levenshtein.DistanceForStrings([]rune(source), []rune(target), levenshtein.DefaultOptions)
+
+					ls := len(source)
+					lt := len(target)
+					if lt < ls {
+						ls = lt
+					}
+
+					s := source[:ls]
+					t := target[:lt]
+
+					d := levenshtein.DistanceForStrings([]rune(s), []rune(t), levenshtein.DefaultOptions)
+
+					log.Trace().Msg(fmt.Sprintf("source: %v target: %v  l: %v", source, target, l))
+					log.Trace().Msg(fmt.Sprintf("s: %v t: %v  res: %v", s, t, d))
+
 					lastWasTrue := false
 					if d < distance {
 						foundThat := ""
@@ -356,10 +387,10 @@ func (l *LineUp) FindDJ(i string, when time.Time) string {
 		}
 	}
 	if !found {
-		return searchedMessage + "Not found. 😔\n"
+		return searchedMessage1 + i + searchedMessage2 + searchedMessageNotFound + searchedMessage3
 	}
 
-	return searchedMessage + res
+	return searchedMessage1 + i + searchedMessage2 + res + searchedMessage3
 }
 
 func (l *LineUp) AddSet(s Set) string {
@@ -634,7 +665,7 @@ func (l LineUp) getDayNumber(t time.Time) int {
 }
 
 func (l LineUp) PrintSetOldFormat(v Set) string {
-	return "- '" + strconv.Itoa(l.getDayNumber(v.Start)) + " " + printTime(v.Start) + " " + strconv.Itoa(int(v.End.Sub(v.Start).Minutes())) + " " + fmt.Sprintf("%v", v.Links) + " " + v.Dj + "'"
+	return "- '" + strconv.Itoa(l.getDayNumber(v.Start)) + " " + printTime(v.Start) + " " + strconv.Itoa(int(v.End.Sub(v.Start).Minutes())) + " " + fmt.Sprintf("%v", v.Meta) + " " + v.Dj + "'"
 }
 
 func (l LineUp) Dump() string {
