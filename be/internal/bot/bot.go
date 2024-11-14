@@ -13,11 +13,12 @@ import (
 	"time"
 
 	"github.com/ottoDaffy/go-diff/diffmatchpatch"
-	"github.com/shallowBunny/app/be/internal/bot/config"
-	"github.com/shallowBunny/app/be/internal/bot/dao"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
 	"github.com/shallowBunny/app/be/internal/bot/users"
+	"github.com/shallowBunny/app/be/internal/infrastructure/config"
+	dao "github.com/shallowBunny/app/be/internal/infrastructure/repository"
+	"github.com/shallowBunny/app/be/internal/utils"
 
 	"github.com/rs/zerolog/log"
 )
@@ -80,10 +81,11 @@ const (
 type KeyboardType int
 
 type Message struct {
-	UserID  int64
-	Text    string
-	Buttons []string
-	Html    bool
+	UserID    int64
+	Text      string
+	Buttons   []string
+	Html      bool
+	ImagePath string
 }
 
 func (b Bot) GetMessageChannel() chan Message {
@@ -363,10 +365,13 @@ func (b Bot) SendModosMessage(input string) {
 func (b Bot) sendMessage(userId int64, msg string) {
 	if b.channel != nil {
 		buttons := b.GetButtonsForUser(userId)
-		b.channel <- Message{
-			UserID:  userId,
+
+		messages := splitMessages([]Message{{UserID: userId,
 			Text:    msg,
-			Buttons: buttons,
+			Buttons: buttons}})
+
+		for _, m := range messages {
+			b.channel <- m
 		}
 	}
 }
@@ -388,7 +393,7 @@ func (b *Bot) SendEvents() {
 
 		if eventsText != "" {
 
-			log.Info().Msg(fmt.Sprintf("sending %d events", len(users)))
+			log.Debug().Msg(fmt.Sprintf("sending %d events", len(users)))
 			for _, v := range users {
 				msgForUser := eventsText
 				if v > 0 { // SKIP pour les groups
@@ -530,12 +535,6 @@ func (b Bot) compareLineUps(lineupA, lineupB *lineUp.LineUp) (string, error) {
 	return res, err
 }
 
-func (b *Bot) ProcessCommand(chatId int64, text, user string) []Message {
-	command, arg := b.parseCommand(chatId, text)
-	log.Debug().Msg(fmt.Sprintf("%v sent <%v> command <%v> arg <%v>", user, text, command, arg))
-	return b.runCommand(chatId, command, arg, text, user)
-}
-
 func NewMergeRequest(beginningSchedule time.Time, changes []inputs.InputCommandResultSet, chatId int64, user string, answer string) *MergeRequests {
 	mr := MergeRequests{
 		Changes:           changes,
@@ -548,6 +547,12 @@ func NewMergeRequest(beginningSchedule time.Time, changes []inputs.InputCommandR
 	}
 	mergeRequestID++
 	return &mr
+}
+
+func (b *Bot) ProcessCommand(chatId int64, text, user string) []Message {
+	command, arg := b.parseCommand(chatId, text)
+	log.Debug().Msg(fmt.Sprintf("%v sent <%v> command <%v> arg <%v>", user, text, command, arg))
+	return b.runCommand(chatId, command, arg, text, user)
 }
 
 func (b *Bot) CreateMergeRequest(mr MergeRequests) {
@@ -627,6 +632,22 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 		}
 		answer += lineUp.PrintCurrent()
 	case strings.ToLower(helpCommand):
+
+		nowImage := b.config.MapImageDirectory + b.config.Meta.NowMapImage
+		err := utils.VerifyFilePath(nowImage)
+		if err != nil {
+			log.Warn().Msg(err.Error())
+		} else {
+			messages = append(messages,
+				Message{
+					UserID:    chatId,
+					Text:      "",
+					Buttons:   nil,
+					Html:      true,
+					ImagePath: nowImage,
+				})
+		}
+
 		if b.config.BotMotd == "" {
 			answer = noMotdMessage
 		} else {

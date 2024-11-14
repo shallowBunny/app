@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/shallowBunny/app/be/internal/bot/dao"
+	dao "github.com/shallowBunny/app/be/internal/infrastructure/repository"
 )
 
 type UserInfo struct {

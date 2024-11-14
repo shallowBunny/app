@@ -45,6 +45,7 @@ type Config struct {
 	Modos                              []int    `yaml:"secrets.modos,omitempty"`
 	TelegramToken                      string   `yaml:"secrets.telegramToken,omitempty"`
 	ServerToken                        string   `yaml:"secrets.serverToken,omitempty"`
+	MapImageDirectory                  string   `yaml:"secrets.mapImageDirectory,omitempty"`
 	NbDaysForInput                     int      `yaml:"nbDaysForInput"`
 	Buttons                            []string `yaml:"buttons"`
 	ReadSetsFromRedisOnRestart         bool     `yaml:"readSetsFromRedisOnRestart"`
@@ -117,6 +118,7 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 		c.Modos = v.GetIntSlice("secrets.modos")
 		c.Port = v.GetInt("secrets.port")
 		c.ServerToken = v.GetString("secrets.serverToken")
+		c.MapImageDirectory = v.GetString("secrets.mapImageDirectory")
 		c.CommandsHistoryLogFile = v.GetString("secrets.commandsHistoryLogFile")
 		c.LogFile = v.GetString("secrets.logFile")
 		c.Demo = v.GetBool("secrets.demo")

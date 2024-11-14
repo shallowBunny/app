@@ -1,4 +1,4 @@
-package bot
+package api
 
 import (
 	"fmt"
@@ -8,12 +8,22 @@ import (
 	"syscall"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shallowBunny/app/be/internal/bot/config"
+	"github.com/shallowBunny/app/be/internal/bot"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
+	"github.com/shallowBunny/app/be/internal/infrastructure/config"
 
 	"github.com/rs/zerolog/log"
 )
+
+type BotHandler struct {
+	Bot *bot.Bot
+}
+
+// NewManifestHandler initializes a new ManifestHandler with the necessary config
+func NewBotHandler(bot *bot.Bot) *BotHandler {
+	return &BotHandler{Bot: bot}
+}
 
 type Response struct {
 	Meta config.Meta  `json:"meta"`
@@ -53,48 +63,13 @@ func getClientIPByRequest(req *http.Request) (ip string) {
 	return "?"
 }
 
-func (b *Bot) GetManifest(c *gin.Context) {
-	manifest := Manifest{
-		Name:            b.config.Meta.MobileAppName,
-		ShortName:       b.config.Meta.MobileAppName,
-		StartURL:        "/",
-		Display:         "standalone",
-		BackgroundColor: "#222123",
-		Lang:            "en",
-		Scope:           "/",
-		Description:     "An app to display DJ sets",
-		ThemeColor:      "#222123",
-		Icons: []Icon{
-			{
-				Src:     b.config.Meta.Prefix + "-192x192.png",
-				Sizes:   "192x192",
-				Type:    "image/png",
-				Purpose: "any",
-			},
-			{
-				Src:     b.config.Meta.Prefix + "-180x180.png",
-				Sizes:   "180x180",
-				Type:    "image/png",
-				Purpose: "maskable",
-			},
-			{
-				Src:     b.config.Meta.Prefix + "-192x192.png",
-				Sizes:   "192x192",
-				Type:    "image/png",
-				Purpose: "maskable",
-			},
-		},
-	}
-	c.JSON(http.StatusOK, manifest)
-}
-
-func (b Bot) GetLineUp(c *gin.Context) {
+func (b *BotHandler) GetLineUp(c *gin.Context) {
 	var response Response
 	ip := getClientIPByRequest(c.Request)
-	response.Sets = b.RootLineUp.Sets
-	response.Meta = b.config.Meta
-	response.Meta.Rooms = b.config.Lineup.Rooms
-	b.Log(0, c.Request.UserAgent(), ip)
+	response.Sets = b.Bot.RootLineUp.Sets
+	response.Meta = b.Bot.GetConfig().Meta
+	response.Meta.Rooms = b.Bot.GetConfig().Lineup.Rooms
+	b.Bot.Log(0, c.Request.UserAgent(), ip)
 	c.JSON(http.StatusOK, response)
 }
 
@@ -117,7 +92,20 @@ func convertLineupToInputCommandResultSets(lineup config.Lineup) []inputs.InputC
 	return results
 }
 
-func (b *Bot) UpdateLineUp(c *gin.Context) {
+func (b *BotHandler) TokenAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.GetHeader("Authorization")
+
+		if token != "Bearer "+b.Bot.GetConfig().ServerToken || b.Bot.GetConfig().ServerToken == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+func (b *BotHandler) UpdateLineUp(c *gin.Context) {
 	var lineup config.Lineup
 
 	// Bind the JSON body to the Lineup struct
@@ -129,20 +117,20 @@ func (b *Bot) UpdateLineUp(c *gin.Context) {
 	// Process the lineup data here (e.g., update your configuration, save to a database, etc.)
 	log.Printf("Received Lineup: %+v\n", lineup)
 
-	mr := NewMergeRequest(lineup.BeginningSchedule, convertLineupToInputCommandResultSets(lineup), 0, "api", getClientIPByRequest(c.Request))
+	mr := bot.NewMergeRequest(lineup.BeginningSchedule, convertLineupToInputCommandResultSets(lineup), 0, "api", getClientIPByRequest(c.Request))
 
-	err := b.ChecForDuplicateMergeRequest(mr)
+	err := b.Bot.ChecForDuplicateMergeRequest(mr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	_, err = b.CheckMergeRequest(mr)
+	_, err = b.Bot.CheckMergeRequest(mr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	b.CreateMergeRequest(*mr)
+	b.Bot.CreateMergeRequest(*mr)
 
 	// Respond to the client
 	c.JSON(http.StatusOK, gin.H{
@@ -160,7 +148,7 @@ type RestartRequest struct {
 	PusherEmail string `json:"pusher_email"`
 }
 
-func (b Bot) Restart(c *gin.Context) {
+func (b *BotHandler) Restart(c *gin.Context) {
 
 	// Parse the JSON request body
 	var req RestartRequest
@@ -179,7 +167,7 @@ func (b Bot) Restart(c *gin.Context) {
 		restartMsg = fmt.Sprintf("Restart: Unknown push type. Pushed by: %s, Pusher: %s (%s), PR URL: %s", req.PushedBy, req.PusherName, req.PusherEmail, req.PrUrl)
 	}
 
-	b.SendAdminsMessage(restartMsg)
+	b.Bot.SendAdminsMessage(restartMsg)
 
 	// Send the response back to the client
 	c.JSON(http.StatusOK, gin.H{
@@ -190,18 +178,5 @@ func (b Bot) Restart(c *gin.Context) {
 	pid := os.Getpid()
 	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
 		log.Printf("Failed to send SIGTERM: %v", err)
-	}
-}
-
-func (b Bot) TokenAuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		token := c.GetHeader("Authorization")
-
-		if token != "Bearer "+b.config.ServerToken || b.config.ServerToken == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
-			return
-		}
-		c.Next()
 	}
 }

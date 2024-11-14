@@ -1,23 +1,17 @@
 package bot
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
-	"github.com/shallowBunny/app/be/internal/bot/config"
-	DaoDb "github.com/shallowBunny/app/be/internal/bot/dao/daoDb"
-	DaoMem "github.com/shallowBunny/app/be/internal/bot/dao/daoMem"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
-	"github.com/tj/assert"
+	"github.com/shallowBunny/app/be/internal/infrastructure/config"
+	DaoDb "github.com/shallowBunny/app/be/internal/infrastructure/repository/daoDb"
+	DaoMem "github.com/shallowBunny/app/be/internal/infrastructure/repository/daoMem"
 )
 
 type test struct {
@@ -393,6 +387,7 @@ func TestInputMultipleMergeAndRebase(t *testing.T) {
 
 }
 
+/*
 func TestUpdateLineUp(t *testing.T) {
 
 	return
@@ -410,11 +405,11 @@ func TestUpdateLineUp(t *testing.T) {
 	currentTime := time.Date(tt.Year(), tt.Month(), tt.Day(), 0, 0, 0, 0, tt.Location())
 	c.Lineup.BeginningSchedule = currentTime
 
-	bot := New(DaoMem.New(), c)
-	bot.channel = nil
+	b := New(DaoMem.New(), c)
+	b.channel = nil
 
-	// Register the UpdateLineUp handler with the router
-	router.PUT("/update-lineup", bot.UpdateLineUp)
+	botHandler := api.NewBotHandler(b)
+	router.PUT("/update-lineup", botHandler.UpdateLineUp)
 
 	// Create a sample Lineup payload
 	lineup := config.Lineup{
@@ -465,3 +460,4 @@ func TestUpdateLineUp(t *testing.T) {
 	expectedResponse := `{"message":"Lineup updated successfully"}`
 	assert.JSONEq(t, expectedResponse, w.Body.String())
 }
+*/

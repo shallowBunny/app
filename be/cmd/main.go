@@ -15,20 +15,26 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/shallowBunny/app/be/internal/bot"
-	"github.com/shallowBunny/app/be/internal/bot/config"
-	"github.com/shallowBunny/app/be/internal/bot/dao"
-	DaoDb "github.com/shallowBunny/app/be/internal/bot/dao/daoDb"
-	DaoMem "github.com/shallowBunny/app/be/internal/bot/dao/daoMem"
+	"github.com/shallowBunny/app/be/internal/bot/api"
+	"github.com/shallowBunny/app/be/internal/infrastructure/config"
+	"github.com/shallowBunny/app/be/internal/infrastructure/logging"
+	"github.com/shallowBunny/app/be/internal/infrastructure/middleware"
+	dao "github.com/shallowBunny/app/be/internal/infrastructure/repository"
+	DaoDb "github.com/shallowBunny/app/be/internal/infrastructure/repository/daoDb"
+	DaoMem "github.com/shallowBunny/app/be/internal/infrastructure/repository/daoMem"
+	"github.com/shallowBunny/app/be/internal/utils"
 
 	"github.com/shallowBunny/app/be/internal/bot/telegram"
 )
 
 func createServer(b *bot.Bot) *http.Server {
 
-	r := gin.Default()
+	r := gin.New()
+
+	r.Use(middleware.ZerologMiddleware()) // Use zerolog middleware instead of default logger
+
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"}, // Update with your frontend URL
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -38,14 +44,15 @@ func createServer(b *bot.Bot) *http.Server {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	r.GET("/api", b.GetLineUp)
-	r.POST("/api", b.TokenAuthMiddleware(), b.Restart)
-	r.PUT("/api", b.TokenAuthMiddleware(), b.UpdateLineUp)
+	botHandler := api.NewBotHandler(b)
 
-	r.GET("/manifest", b.GetManifest)
-	r.GET("/manifest.webmanifest", b.GetManifest)
+	r.GET("/api", botHandler.GetLineUp)
+	r.POST("/api", botHandler.TokenAuthMiddleware(), botHandler.Restart)
+	r.PUT("/api", botHandler.TokenAuthMiddleware(), botHandler.UpdateLineUp)
 
-	go r.Run()
+	manifestHandler := api.NewManifestHandler(b.GetConfig())
+	r.GET("/manifest", manifestHandler.GetManifest)
+	r.GET("/manifest.webmanifest", manifestHandler.GetManifest)
 
 	// Create an HTTP server using the Gin router
 	server := &http.Server{
@@ -53,48 +60,6 @@ func createServer(b *bot.Bot) *http.Server {
 		Handler: r, // Gin engine as the HTTP handler
 	}
 	return server
-}
-
-func isLocalhostTesting() bool {
-	hostname, err := os.Hostname()
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to get hostname")
-	}
-	return hostname == os.Getenv("SHALLOWBUNNY_LOCALHOST")
-}
-
-func initLogging(fileName string) *os.File {
-	if isLocalhostTesting() {
-		consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05"}
-		log.Logger = zerolog.New(consoleWriter).
-			With().
-			Timestamp().
-			Caller().
-			Logger()
-		log.Debug().Msg("isLocalhostTesting is true: not using logFile, logging initialized for console with colors and caller information")
-		return nil
-	} else {
-		zerolog.SetGlobalLevel(zerolog.InfoLevel) // Skip debug level
-		logFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err != nil {
-			// will be used for checkConfig option
-			consoleWriter := zerolog.ConsoleWriter{
-				Out:     os.Stderr,
-				NoColor: true, // Disable colors
-			}
-			log.Logger = zerolog.New(consoleWriter).
-				With().
-				Timestamp().
-				Logger()
-			return nil
-		}
-		log.Logger = zerolog.New(logFile).
-			With().
-			Timestamp().
-			Caller().
-			Logger()
-		return logFile
-	}
 }
 
 func runRestartScript(runRestartScriptArg string) (string, error) {
@@ -132,7 +97,7 @@ func main() {
 	}
 
 	// Initialize logging and get the file handles
-	logFile := initLogging(config.LogFile)
+	logFile := logging.InitLogging(config.LogFile)
 	if logFile != nil {
 		defer logFile.Close() // Ensure files are closed when main exits
 	}
@@ -141,7 +106,7 @@ func main() {
 
 	telegramToken := config.TelegramToken
 
-	if isLocalhostTesting() {
+	if utils.IsLocalhostTesting() {
 		log.Debug().Msg("isLocalhostTesting is true: using env SHALLOWBUNNY_TELEGRAM_API_TOKEN and port 8082")
 		envToken := os.Getenv("SHALLOWBUNNY_TELEGRAM_API_TOKEN")
 		if envToken != "" {

@@ -8,8 +8,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/shallowBunny/app/be/internal/bot/config"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
+	"github.com/shallowBunny/app/be/internal/infrastructure/config"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
 
 	"github.com/ijt/go-anytime"

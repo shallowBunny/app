@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/shallowBunny/app/be/internal/bot/config"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
+	"github.com/shallowBunny/app/be/internal/infrastructure/config"
 )
 
 type test struct {

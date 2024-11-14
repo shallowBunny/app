@@ -106,6 +106,24 @@ func messageToMessageConfig(msgFromBot bot.Message) tgbotapi.MessageConfig {
 	return msg
 }
 
+func (t *Telegram) SendPhoto(chatID int64, photoFilePath string, caption string) error {
+	// Create a new photo message with a local file
+	photoMsg := tgbotapi.NewPhoto(chatID, tgbotapi.FilePath(photoFilePath))
+
+	// Add a caption to the photo if needed
+	if caption != "" {
+		photoMsg.Caption = caption
+		photoMsg.ParseMode = "HTML" // Optional: use HTML formatting if needed
+	}
+
+	// Send the photo message
+	_, err := t.api.Send(photoMsg)
+	if err != nil {
+		log.Error().Msg(fmt.Sprintf("Error sending photo: %v", err))
+	}
+	return err
+}
+
 func (t Telegram) SendMessages() {
 
 	for {
@@ -178,6 +196,14 @@ func (t Telegram) Listen(quit <-chan struct{}) {
 				if update.Message.Chat.ID > 0 { // Skip joins in channels
 					messages := t.bot.ProcessCommand(update.Message.Chat.ID, update.Message.Text, getUsername(update))
 					for i, answer := range messages {
+
+						if answer.ImagePath != "" {
+							if err := t.SendPhoto(answer.UserID, answer.ImagePath, answer.Text); err != nil {
+								log.Error().Msg("Failed to send image")
+							}
+							continue
+						}
+
 						if len(answer.Text) > 4096 {
 							log.Error().Msg("Had to trim inside!!?")
 							answer.Text = bot.Trim(answer.Text)
