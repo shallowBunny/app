@@ -3,13 +3,15 @@ import { groupSetsByDayAndTime } from "@/lib/sets";
 
 import { Set, Like } from "@/lib/types"; // Import the Like type
 
+import MetaIcons from "./MetaIcons";
+
 interface RoomProps {
 	sets: Set[];
 	room: string;
 	youarehere: string;
 	currentMinute: Date;
 	likedDJs: Like[]; // Use an array of Like objects instead of a map
-	isStandalone: boolean;
+	isDesktop: boolean;
 }
 
 const mergeMissingDataSets = (sets: Set[]): Set[] => {
@@ -149,7 +151,7 @@ const isSetOngoingNow = (sets: Set[]): boolean => {
 };
 
 const Room = (props: RoomProps) => {
-	const { sets, room, youarehere, currentMinute, likedDJs } = props; // Destructure likedDJs (array)
+	const { sets, room, youarehere, currentMinute, likedDJs, isDesktop } = props; // Destructure likedDJs (array)
 
 	const mergedSets = addClosingAndClosedSets(
 		mergeMissingDataSets(sets),
@@ -220,7 +222,7 @@ const Room = (props: RoomProps) => {
 											) : (
 												<li
 													key={`${set.dj}-${set.start}`}
-													className="text-[18px]"
+													className={`text-[18px] ${!isDesktop ? "" : "flex items-center justify-between"}`}
 												>
 													{set.start.toLocaleTimeString("en-GB", {
 														hour: "2-digit",
@@ -228,6 +230,9 @@ const Room = (props: RoomProps) => {
 													})}{" "}
 													{set.dj}
 													{isDjLiked(set.dj, likedDJs) && <span> ❤️</span>}
+													{isDesktop && (
+														<MetaIcons meta={set.meta} roomPage={true} />
+													)}
 												</li>
 											)}
 										</div>

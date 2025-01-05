@@ -6,7 +6,7 @@ export function groupSetsByDayAndTime(sets: Set[]): Record<string, Set[]> {
 	const grouped: Record<string, Set[]> = {};
 
 	sets.forEach((set) => {
-		const day = set.start.toLocaleDateString([], {
+		const day = set.start.toLocaleDateString("en-GB", {
 			weekday: "long",
 		});
 		if (!grouped[day]) {

@@ -23,6 +23,8 @@ import { allSetsInPastAndFinishedMoreThanXHoursAgo } from "../lib/sets";
 import useCurrentMinute from "../hooks/useCurrentMinute";
 import { loadImageAsync } from "../lib/loadImage";
 import { PacmanLoader } from "react-spinners";
+import { postUpdatedLikes, parseAndMigrateLikedDJs } from "../lib/likesService";
+import { isLocalhost } from "../lib/api";
 
 // Lazy load RoomPage
 const RoomPage = lazy(() => import("./RoomPage"));
@@ -37,7 +39,9 @@ const Layout: React.FC = () => {
 	const [appleTouchIcon, setAppleTouchIcon] = useState<string | null>(null); // State for apple-touch-icon
 	const [appleMobileWebAppTitle, setAppleMobileWebAppTitle] =
 		useState<string>("Lineup app");
-	const [isStandalone, setIsStandalone] = useState<boolean>(false); // State for isStandalone
+	const [isRunningAsWPA, setIsRunningAsWPA] = useState<boolean>(false); // State for isRunningAsWPA
+	const [isDesktop, setIsDesktop] = useState<boolean>(false);
+
 	const [areAllSetsInPast, setAreAllSetsInPast] = useState<boolean>(false); // State to track if all sets are in the past
 	const currentMinute = useCurrentMinute(); // Use the custom hook
 	const [showLoadingModal, setShowLoadingModal] = useState(true); // New state for loading modal
@@ -45,45 +49,28 @@ const Layout: React.FC = () => {
 	// Add likedDJs state
 	const [likedDJs, setLikedDJs] = useState<Like[]>([]);
 
-	// Load likedDJs from localStorage on mount
-	useEffect(() => {
-		const storedLikedDJs = localStorage.getItem("likedDJs");
-		if (storedLikedDJs) {
-			try {
-				const parsedLikedDJs = JSON.parse(storedLikedDJs) as Like[];
-				const likedDJsWithDates = parsedLikedDJs.map((like) => {
-					// Migrate if `links` exists and `meta` is empty
-					if (
-						like.links &&
-						like.links.length > 0 &&
-						(!like.meta || like.meta.length === 0)
-					) {
-						const [linkValue] = like.links; // Get the string value from links array
-						if (like.dj !== "?") {
-							like.meta = [
-								{
-									key: `dj.link.sisyfan.${like.dj}`,
-									value: linkValue,
-								},
-							];
-						}
-						// TODO	like.links = [""]; // Clear the links array
-						console.log("migrating " + like.meta);
-					}
-
-					return {
-						...like,
-						beginningSchedule: new Date(like.beginningSchedule),
-						started: new Date(like.started),
-						meta: like.meta || [],
-					};
-				});
-				setLikedDJs(likedDJsWithDates);
-			} catch (e) {
-				console.error("Failed to parse likedDJs from localStorage:", e);
-			}
+	const updateLikesWithServer = async (updatedLikedDJs: Like[]) => {
+		try {
+			const likes = await postUpdatedLikes(updatedLikedDJs);
+			setLikedDJs(likes);
+		} catch (error) {
+			// Handle errors
+			console.error("Error fetching data:", error);
 		}
-	}, []);
+	};
+
+	//	const handleLikedDJsChange = async (updatedLikedDJs: Like[]) => {
+	const handleLikedDJsChange = async (
+		updateFn: (prevLikedDJs: Like[]) => Like[]
+	) => {
+		// Get the updated liked DJs
+		const updatedLikedDJs = updateFn(likedDJs);
+
+		console.log("handleLikedDJsChange");
+		// Update the state with the updated liked DJs
+		setLikedDJs(updatedLikedDJs);
+		updateLikesWithServer(updatedLikedDJs);
+	};
 
 	// Save likedDJs to localStorage whenever likedDJs changes
 	useEffect(() => {
@@ -93,11 +80,26 @@ const Layout: React.FC = () => {
 	}, [likedDJs]);
 
 	useEffect(() => {
-		const checkStandalone = () => {
+		const checkRunningAsWPA = () => {
 			let standalone =
 				window.matchMedia("(display-mode: standalone)").matches ||
 				(window.navigator as any).standalone === true;
 
+			// Load likedDJs from localStorage on mount
+			const storedLikedDJs = localStorage.getItem("likedDJs");
+			if (storedLikedDJs) {
+				try {
+					const likesNoDates = JSON.parse(storedLikedDJs) as Like[];
+					const parsedLikedDJs = parseAndMigrateLikedDJs(likesNoDates);
+					setLikedDJs(parsedLikedDJs);
+					if (standalone || isLocalhost()) {
+						updateLikesWithServer(parsedLikedDJs);
+					}
+				} catch (e) {
+					console.error("Failed to parse likedDJs from localStorage:", e);
+				}
+			}
+			// force standalone to true if not running on mobile
 			const userAgent =
 				navigator.userAgent || navigator.vendor || (window as any).opera;
 			if (
@@ -105,12 +107,18 @@ const Layout: React.FC = () => {
 				(/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream)
 			) {
 				standalone = standalone;
+				setIsDesktop(false);
 			} else {
 				standalone = true;
+				setIsDesktop(true);
 			}
-			setIsStandalone(standalone);
+			setIsRunningAsWPA(standalone);
+
+			console.log("setIsRunningAsWPA:" + standalone);
+			console.log("setIsDesktop:" + isDesktop);
 		};
-		checkStandalone();
+
+		checkRunningAsWPA();
 	}, []);
 
 	useEffect(() => {
@@ -163,12 +171,8 @@ const Layout: React.FC = () => {
 				data.meta.nowTextWhenFinished &&
 				data.meta.nowTextWhenFinished.trim().length > 0
 			);
-			if (!allSetsPast) {
-				const pageTitle = data.meta.title || "Lineup app";
-				setPageTitle(pageTitle);
-			} else {
-				setShowRoomPage(false); // show NOW
-			}
+			const pageTitle = data.meta.title + " lineup";
+			setPageTitle(pageTitle);
 			setAreAllSetsInPast(allSetsPast);
 
 			if (selectedRoom === "" && data?.sets?.length > 0) {
@@ -243,11 +247,15 @@ const Layout: React.FC = () => {
 						name="apple-mobile-web-app-title"
 						content={appleMobileWebAppTitle}
 					/>
+					<meta
+						name="description"
+						content={`this website shows the lineup for ${data.meta.title}`}
+					/>
 				</Helmet>
 				<div
 					style={{
-						height: isStandalone ? "89vh" : "80vh",
-						top: isStandalone ? "0vh" : "1vh",
+						height: isRunningAsWPA ? "89vh" : "80vh",
+						top: isRunningAsWPA ? "0vh" : "1vh",
 					}}
 					className="w-full absolute"
 				>
@@ -257,26 +265,28 @@ const Layout: React.FC = () => {
 						>
 							<RoomPage
 								data={data}
-								isStandalone={isStandalone}
+								isRunningAsWPA={isRunningAsWPA}
+								isDesktop={isDesktop}
 								currentMinute={currentMinute}
 								selectedRoom={selectedRoom}
 								setSelectedRoom={setSelectedRoom} // Pass setSelectedRoom to RoomPage
 								likedDJs={likedDJs} // Pass likedDJs only to RoomPage
+								handleLikedDJsChange={handleLikedDJsChange}
 							/>
 						</Suspense>
 					) : (
 						<Now
 							data={data}
-							isStandalone={isStandalone}
+							isRunningAsWPA={isRunningAsWPA}
 							allSetsInPast={areAllSetsInPast}
 							currentMinute={currentMinute}
 							likedDJs={likedDJs} // Pass likedDJs to Now
-							setLikedDJs={setLikedDJs}
+							handleLikedDJsChange={handleLikedDJsChange}
 						/>
 					)}
 				</div>
 				<div
-					className={`flex mb-1 mt-2 w-full absolute ${isStandalone ? "top-[90vh]" : "top-[80vh]"}`}
+					className={`flex mb-1 mt-2 w-full absolute ${isRunningAsWPA ? "top-[90vh]" : "top-[80vh]"}`}
 				>
 					<Drawer>
 						<div className="flex w-full gap-1 mx-2">
@@ -346,11 +356,12 @@ const Layout: React.FC = () => {
 														href="https://shallowbunny.com"
 														target="_blank"
 														className="relative max-w-[64px] block overflow-hidden"
+														title="Festivals lineup"
 													>
 														<img
 															className="w-full"
 															src={BunnyIcon}
-															alt="bunny"
+															alt="Festivals lineup"
 														/>
 													</a>
 												)}
@@ -359,8 +370,13 @@ const Layout: React.FC = () => {
 														href="https://sisyduck.com"
 														target="_blank"
 														className="relative max-w-[64px] block overflow-hidden"
+														title="Sisyphos lineup"
 													>
-														<img className="w-full" src={DuckIcon} alt="duck" />
+														<img
+															className="w-full"
+															src={DuckIcon}
+															alt="Sisyphos lineup"
+														/>
 													</a>
 												)}
 												{data.meta.botUrl && (

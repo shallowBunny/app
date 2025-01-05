@@ -5,12 +5,19 @@ import type { Set, Like } from "../../lib/types";
 import levenshtein from "fast-levenshtein";
 import Likes from "./Likes"; // Import the Likes component
 
+import MetaIcons from "./MetaIcons";
+
 interface SearchProps {
 	sets: Set[];
 	likedDJs: Like[]; // Add this prop
+	handleLikedDJsChange: (updateFn: (prevLikedDJs: Like[]) => Like[]) => void;
 }
 
-const Search: React.FC<SearchProps> = ({ sets, likedDJs }) => {
+const Search: React.FC<SearchProps> = ({
+	sets,
+	likedDJs,
+	handleLikedDJsChange,
+}) => {
 	const [query, setQuery] = useState("");
 	const [filteredSets, setFilteredSets] = useState<Set[]>([]);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -21,6 +28,9 @@ const Search: React.FC<SearchProps> = ({ sets, likedDJs }) => {
 				inputRef.current?.focus();
 			}, 300); // Delay to ensure it focuses after the component fully mounts
 		}
+		handleLikedDJsChange(() => {
+			return likedDJs; // Or modify as needed
+		});
 	}, []);
 
 	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,18 +166,25 @@ const Search: React.FC<SearchProps> = ({ sets, likedDJs }) => {
 						});
 
 						let text =
-							set.dj + " " + set.room + " - " + setDay + " at " + setTimeStr;
+							set.dj + ", " + setDay + " at " + setTimeStr + " in " + set.room;
 						if (isSetNow(set)) {
 							text =
 								set.dj +
 								" is playing now in " +
 								set.room +
-								" - it started at " +
-								setTimeStr;
+								" (started at " +
+								setTimeStr +
+								")";
 						}
 						return (
-							<li key={index} className="search-result-item">
-								{isSetInFuture(set.end) ? "✅" : "🚫"} {text}
+							<li key={index} className="search-result-item flex items-start">
+								<span className="text-[20px] mr-2 flex-shrink-0">
+									{isSetInFuture(set.end) ? "✅" : "🚫"}
+								</span>
+								<span className="text-[18px]">
+									{text}
+									<MetaIcons meta={set.meta} />
+								</span>
 							</li>
 						);
 					})}

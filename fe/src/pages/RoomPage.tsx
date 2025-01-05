@@ -11,20 +11,24 @@ import Search from "@/components/ui/Search"; // Import the Search component
 
 interface RoomPageProps {
 	data: Data;
-	isStandalone: boolean;
+	isRunningAsWPA: boolean;
+	isDesktop: boolean;
 	currentMinute: Date; // Add the currentMinute prop
 	selectedRoom: string; // Add selectedRoom prop
 	setSelectedRoom: (room: string) => void; // Add setSelectedRoom as a prop
 	likedDJs: Like[]; // Update likedDJs to be a list of Like objects
+	handleLikedDJsChange: (updateFn: (prevLikedDJs: Like[]) => Like[]) => void;
 }
 
 const RoomPage: FunctionComponent<RoomPageProps> = ({
 	data,
-	isStandalone,
+	isRunningAsWPA,
+	isDesktop,
 	currentMinute,
 	selectedRoom,
 	setSelectedRoom,
 	likedDJs,
+	handleLikedDJsChange,
 }) => {
 	if (!data || !data.sets) {
 		return (
@@ -43,7 +47,7 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 
 	// Change this to expand the tabs vertically
 	let vhForAllTabs = 79.0;
-	if (isStandalone) {
+	if (isRunningAsWPA) {
 		vhForAllTabs = 90.0;
 	}
 
@@ -113,7 +117,7 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 										sets={data.sets.filter((set) => set.room === room)}
 										currentMinute={currentMinute}
 										likedDJs={likedDJs} // Pass likedDJs as a prop
-										isStandalone={isStandalone}
+										isDesktop={isDesktop}
 									/>
 									<div className="h-20"></div>
 								</div>
@@ -126,7 +130,11 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 						value="search"
 					>
 						<div className="absolute top-5">
-							<Search sets={data.sets} likedDJs={likedDJs} />
+							<Search
+								sets={data.sets}
+								likedDJs={likedDJs}
+								handleLikedDJsChange={handleLikedDJsChange}
+							/>
 						</div>
 					</Tabs.Content>
 				</Tabs.Root>

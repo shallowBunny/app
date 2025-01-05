@@ -11,19 +11,19 @@ import { loadImageAsync } from "../../lib/loadImage";
 
 interface NowProps {
 	data: Data;
-	isStandalone: boolean;
+	isRunningAsWPA: boolean;
 	allSetsInPast: boolean;
 	currentMinute: Date;
 	likedDJs: Like[]; // Modify likedDJs to an array of Like objects
-	setLikedDJs: React.Dispatch<React.SetStateAction<Like[]>>; // Modify setLikedDJs to update an array of Like objects
+	handleLikedDJsChange: (updateFn: (prevLikedDJs: Like[]) => Like[]) => void;
 }
 
 export const Now: FunctionComponent<NowProps> = ({
 	data,
-	isStandalone,
+	isRunningAsWPA,
 	allSetsInPast,
 	likedDJs,
-	setLikedDJs,
+	handleLikedDJsChange,
 }) => {
 	const [mapImageSrc, setMapImageSrc] = useState<string | null>(null); // State to store the loaded image URL
 	const overriddenNow = getOverriddenCurrentTime();
@@ -41,12 +41,13 @@ export const Now: FunctionComponent<NowProps> = ({
 		}
 	}, [data.meta.nowMapImage]);
 
-	const vh = isStandalone ? 89.5 : 78.0;
+	const vh = isRunningAsWPA ? 89.5 : 78.0;
 	const height = `${vh}vh`; // Subtracting 2.6vh as per your original code
 
+	// toggleLike will call handleLikedDJsChange with a function to update the liked DJs
 	const toggleLike = (like: Like) => {
-		setLikedDJs((prevLikedDJs) => {
-			// Check if the Like already exists in the likedDJs array
+		// Pass the update function to handleLikedDJsChange
+		handleLikedDJsChange((prevLikedDJs) => {
 			const isLiked = prevLikedDJs.some(
 				(existingLike) =>
 					existingLike.dj === like.dj &&
@@ -56,7 +57,7 @@ export const Now: FunctionComponent<NowProps> = ({
 			);
 
 			if (isLiked) {
-				// If the DJ is already liked, remove the Like
+				// If the DJ is already liked, remove the Like from the array
 				return prevLikedDJs.filter(
 					(existingLike) =>
 						existingLike.dj !== like.dj ||
@@ -65,7 +66,7 @@ export const Now: FunctionComponent<NowProps> = ({
 						existingLike.room !== like.room
 				);
 			} else {
-				// If the DJ is not liked, add the new Like object
+				// If the DJ is not liked, add the new Like object to the array
 				return [like, ...prevLikedDJs];
 			}
 		});
@@ -121,7 +122,7 @@ export const Now: FunctionComponent<NowProps> = ({
 						);
 					})}
 				<div className="text-[18px]">
-					{!isStandalone && (
+					{!isRunningAsWPA && (
 						<li key="infowpa" className="mb-4">
 							This website should be able to work without internet if you keep
 							its window open, but the best/safest solution is to add it to your
