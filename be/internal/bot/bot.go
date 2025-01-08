@@ -257,7 +257,7 @@ func (b Bot) GetConfig() *config.Config {
 // user = 0 pour les logs web
 func (b *Bot) Log(user int64, command, userString string) {
 
-	logString := "\"" + command + "\", //" + time.Now().Format("Mon 15:04") + " " + userString + " " + strconv.Itoa(int(user)) + "\n"
+	logString := "\"" + command + "\", //" + time.Now().Format("Mon Jan 2 2006 15:04:05 MST") + " " + userString + " " + strconv.Itoa(int(user)) + "\n"
 
 	if user != 0 && b.commandsHistoryLogFile != nil {
 		if _, err := b.commandsHistoryLogFile.WriteString(logString); err != nil {
@@ -598,6 +598,30 @@ func (b Bot) CheckMergeRequest(r *MergeRequests) (string, error) {
 	return answer, err
 }
 
+func (b *Bot) getMapImageMessage(chatId int64, always bool) (Message, error) {
+	res := Message{}
+	shown, err := b.users.MapImageShown(chatId)
+	if err != nil {
+		return res, err
+	}
+	if !shown || always {
+		nowImage := b.config.MapImageDirectory + b.config.Meta.NowMapImage
+		err := utils.VerifyFilePath(nowImage)
+		if err != nil {
+			return res, err
+		}
+		res = Message{
+			UserID:    chatId,
+			Text:      "",
+			Buttons:   nil,
+			Html:      true,
+			ImagePath: nowImage,
+		}
+		return res, b.users.SetMapImageShown(chatId)
+	}
+	return res, errors.New("already shown")
+}
+
 func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) []Message {
 
 	messages := []Message{}
@@ -633,19 +657,11 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 		answer += lineUp.PrintCurrent()
 	case strings.ToLower(helpCommand):
 
-		nowImage := b.config.MapImageDirectory + b.config.Meta.NowMapImage
-		err := utils.VerifyFilePath(nowImage)
+		mapMessage, err := b.getMapImageMessage(chatId, true)
 		if err != nil {
-			log.Warn().Msg(err.Error())
+			log.Trace().Msg(err.Error())
 		} else {
-			messages = append(messages,
-				Message{
-					UserID:    chatId,
-					Text:      "",
-					Buttons:   nil,
-					Html:      true,
-					ImagePath: nowImage,
-				})
+			messages = append(messages, mapMessage)
 		}
 
 		if b.config.BotMotd == "" {
@@ -879,6 +895,13 @@ func (b *Bot) runCommand(chatId int64, command, arg, orig string, user string) [
 		})
 	} else {
 		log.Warn().Msg("skipped empty message")
+	}
+
+	mapMessage, err := b.getMapImageMessage(chatId, false)
+	if err != nil {
+		log.Trace().Msg(err.Error())
+	} else {
+		messages = append([]Message{mapMessage}, messages...)
 	}
 
 	return splitMessages(messages)

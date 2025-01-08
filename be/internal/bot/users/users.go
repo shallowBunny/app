@@ -17,6 +17,7 @@ type UserInfo struct {
 	NewUser       bool
 	MagicButton1  int
 	MagicButton2  int
+	MapImageShown bool
 }
 
 type Users struct {
@@ -67,6 +68,24 @@ func (u *Users) SaveUsers() error {
 	}
 	log.Trace().Msg(res)
 	return u.dao.Save("users", u.startTime, s)
+}
+
+func (u Users) MapImageShown(userId int64) (bool, error) {
+	_, ok := u.usersInfo[userId]
+	if !ok {
+		log.Warn().Msg(fmt.Sprintf("MapImageShown %d", userId))
+		return true, errors.New("MapImageShown on unknown user")
+	}
+	return u.usersInfo[userId].MapImageShown, nil
+}
+
+func (u *Users) SetMapImageShown(userId int64) error {
+	_, ok := u.usersInfo[userId]
+	if !ok {
+		return errors.New("trying to set MapImageShown on unknown user")
+	}
+	u.usersInfo[userId].MapImageShown = true
+	return u.SaveUsers()
 }
 
 func (u Users) HasUserNotifications(userId int64) (bool, error) {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +11,7 @@ import (
 	"github.com/shallowBunny/app/be/internal/bot/lineUp"
 	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
 	"github.com/shallowBunny/app/be/internal/infrastructure/config"
+	"github.com/shallowBunny/app/be/internal/utils"
 
 	"github.com/rs/zerolog/log"
 )
@@ -52,20 +52,9 @@ type Icon struct {
 	Purpose string `json:"purpose,omitempty"`
 }
 
-func getClientIPByRequest(req *http.Request) (ip string) {
-	forwarded := req.Header.Get("X-Forwarded-For")
-	if forwarded != "" {
-		ips := strings.Split(forwarded, ",")
-		if len(ips) >= 1 {
-			return strings.TrimSpace(ips[0])
-		}
-	}
-	return "?"
-}
-
 func (b *BotHandler) GetLineUp(c *gin.Context) {
 	var response Response
-	ip := getClientIPByRequest(c.Request)
+	ip := utils.GetClientIPByRequest(c.Request)
 	response.Sets = b.Bot.RootLineUp.Sets
 	response.Meta = b.Bot.GetConfig().Meta
 	response.Meta.Rooms = b.Bot.GetConfig().Lineup.Rooms
@@ -117,7 +106,7 @@ func (b *BotHandler) UpdateLineUp(c *gin.Context) {
 	// Process the lineup data here (e.g., update your configuration, save to a database, etc.)
 	log.Printf("Received Lineup: %+v\n", lineup)
 
-	mr := bot.NewMergeRequest(lineup.BeginningSchedule, convertLineupToInputCommandResultSets(lineup), 0, "api", getClientIPByRequest(c.Request))
+	mr := bot.NewMergeRequest(lineup.BeginningSchedule, convertLineupToInputCommandResultSets(lineup), 0, "api", utils.GetClientIPByRequest(c.Request))
 
 	err := b.Bot.ChecForDuplicateMergeRequest(mr)
 	if err != nil {

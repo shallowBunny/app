@@ -48,11 +48,10 @@ type LineUp struct {
 }
 
 const (
-	UnknownDJ   = "?"
-	closed      = "🚫 closed"
-	noDataRoom  = "⚠️ no data"
-	openedFloor = "✅"
-	//noData              = "⚠️ No data available yet ⚠️"
+	UnknownDJ               = "?"
+	closed                  = "🚫 closed"
+	noDataRoom              = "⚠️ no data"
+	openedFloor             = "✅"
 	missingData             = "\n\n⚠️ Some data is missing ⚠️"
 	here                    = " <- you are here"
 	minSizeDJSearch         = 2
@@ -126,6 +125,8 @@ func (l LineUp) GetSetsAndDurations() string {
 	})
 	totalSets := 0
 	totalDuration := 0
+	validDjDuration := 0
+
 	var result strings.Builder
 
 	// Loop through each set to count sets and calculate total duration for each room
@@ -143,6 +144,10 @@ func (l LineUp) GetSetsAndDurations() string {
 		}
 		totalSets++
 		totalDuration += duration
+
+		if set.Dj != UnknownDJ {
+			validDjDuration += duration
+		}
 	}
 
 	// Add the results for each room to the result string
@@ -150,9 +155,13 @@ func (l LineUp) GetSetsAndDurations() string {
 		result.WriteString(fmt.Sprintf("Room: %s, Number of sets: %d, Total duration: %d minutes\n", room, data.setCount, data.totalMins))
 	}
 
+	var validDjPercentage float64
+	if totalDuration > 0 {
+		validDjPercentage = (float64(validDjDuration) / float64(totalDuration)) * 100
+	}
 	// Add the total number of sets and total duration across all rooms
 	result.WriteString(fmt.Sprintf("Total number of sets: %d\n", totalSets))
-	result.WriteString(fmt.Sprintf("Total duration across all rooms: %d minutes\n", totalDuration))
+	result.WriteString(fmt.Sprintf("Total duration across all rooms: %d minutes %.2f%% known\n", totalDuration, validDjPercentage))
 	result.WriteString(fmt.Sprintf("BeginningSchedule: %v\n", l.config.BeginningSchedule))
 
 	return result.String()
@@ -316,7 +325,7 @@ func (l *LineUp) FindRoom(source string, distanceMaxRoom int) (int, string) {
 
 func (l *LineUp) FindDJ(i string, when time.Time) string {
 
-	if len(i) <= minSizeDJSearch {
+	if len(filterNonASCIIAndSpaces(i)) <= minSizeDJSearch {
 		return minSizeDJSearchText + searchedMessage3
 	}
 
@@ -449,8 +458,6 @@ func (l *LineUp) AddSet(s Set) string {
 
 	l.Sets = resSet
 
-	//log.Trace().Msg(fmt.Sprintf("start=%v", s.Start))
-
 	l.computeEvents()
 	return msg
 }
@@ -495,11 +502,13 @@ func (l LineUp) printRoom(sets []Set, oldData bool, oldLineupMessage string, cur
 
 	log.Trace().Msg(fmt.Sprintf("printRoom: oldLineup:%v currentTime:%v", oldLineupMessage, currentTime))
 
+	log.Trace().Msgf("currentTime %v", currentTime)
+
 	sort.Slice(sets, func(i, j int) bool {
 		return sets[i].Start.Before(sets[j].Start)
 	})
 
-	currentDay := -1 // Initialize to a value that will not match any day in sets
+	var lastPrintedCurrentDay time.Time
 	foundData := false
 
 	for _, set := range sets {
@@ -514,19 +523,20 @@ func (l LineUp) printRoom(sets []Set, oldData bool, oldLineupMessage string, cur
 		return l.config.BotNoDataAvailableYet
 	}
 
+	var lastSetTime time.Time
 	for _, set := range sets {
 		if set.Dj == UnknownDJ {
 			continue
 		}
 
-		// Check if we need to add the day header
-		if set.Start.Day() != currentDay {
-			// Print "you are here" before changing the day if not yet printed and it's still today
-			if !printedYouAreHere && currentDay != -1 && currentDay == currentTime.Day() {
-				res += youAre + here + "\n"
-				printedYouAreHere = true
-			}
-			if currentDay != -1 {
+		if !printedYouAreHere && set.Start.After(currentTime) && sameDay(currentTime, lastSetTime) {
+			res += youAre + here + "\n"
+			printedYouAreHere = true
+			log.Trace().Msgf("you are here A  %v %v", lastPrintedCurrentDay, set.Start)
+		}
+
+		if !sameDay(lastPrintedCurrentDay, set.Start) {
+			if !lastPrintedCurrentDay.IsZero() {
 				res += "\n"
 			}
 			if sameDay(currentTime, set.Start) {
@@ -534,13 +544,13 @@ func (l LineUp) printRoom(sets []Set, oldData bool, oldLineupMessage string, cur
 			} else {
 				res += set.Start.Format("Monday") + ":\n"
 			}
-			currentDay = set.Start.Day()
+			lastPrintedCurrentDay = set.Start
 		}
 
-		// Print "you are here" before the next event if it's the first future event
-		if set.Start.After(currentTime) && !printedYouAreHere {
+		if !printedYouAreHere && set.Start.After(currentTime) && sameDay(currentTime, lastPrintedCurrentDay) {
 			res += youAre + here + "\n"
 			printedYouAreHere = true
+			log.Trace().Msgf("you are here B x %v %v", lastPrintedCurrentDay, set.Start)
 		}
 
 		res += printTime(set.Start) + " " + set.Dj
@@ -548,15 +558,37 @@ func (l LineUp) printRoom(sets []Set, oldData bool, oldLineupMessage string, cur
 			res += " " + set.Room
 		}
 		res += "\n"
+		lastSetTime = set.Start
 	}
 
 	// Check if the closing time is after the current time and add "you are here" if not yet printed
 	if closingTime.After(currentTime) {
-		if !printedYouAreHere {
+		if !printedYouAreHere && closingTime.Day() == currentTime.Day() {
 			res += youAre + here + "\n"
+			log.Trace().Msg("you are here3")
+		}
+		if !sameDay(lastPrintedCurrentDay, closingTime) {
+			if !lastPrintedCurrentDay.IsZero() {
+				res += "\n"
+			}
+			if sameDay(currentTime, closingTime) {
+				res += "Today:\n"
+			} else {
+				res += closingTime.Format("Monday") + ":\n"
+			}
 		}
 		res += printTime(closingTime) + " closing\n"
 	} else {
+		if !sameDay(lastPrintedCurrentDay, closingTime) {
+			if !lastPrintedCurrentDay.IsZero() {
+				res += "\n"
+			}
+			if sameDay(currentTime, closingTime) {
+				res += "Today:\n"
+			} else {
+				res += closingTime.Format("Monday") + ":\n"
+			}
+		}
 		res += printTime(closingTime) + " closed\n"
 	}
 
@@ -607,6 +639,35 @@ func (l LineUp) AllSetsFinished() bool {
 		}
 	}
 	return true
+}
+
+func (l LineUp) FirstSetTime() time.Time {
+	var res time.Time
+	for _, v := range l.Sets {
+		if v.Start.Before(res) || res.IsZero() {
+			res = v.Start
+		}
+	}
+	return res
+}
+
+func (l LineUp) IsPartyGoingOnNow() bool {
+	now := time.Now()
+	for _, v := range l.Sets {
+		if v.Start.Before(now) && v.End.After(now) {
+			return true
+		}
+	}
+	return false
+}
+
+func (l LineUp) AreThereSomeUnknownDjs() bool {
+	for _, v := range l.Sets {
+		if v.Dj == UnknownDJ {
+			return true
+		}
+	}
+	return false
 }
 
 func (l LineUp) Print(youAreHere string, filterNomSalle string) string {

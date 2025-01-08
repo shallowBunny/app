@@ -2,7 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"net/http"
 	"os"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 )
@@ -24,4 +26,15 @@ func VerifyFilePath(photoFilePath string) error {
 		return fmt.Errorf("file path error: %s, %v", photoFilePath, err)
 	}
 	return nil
+}
+
+func GetClientIPByRequest(req *http.Request) (ip string) {
+	forwarded := req.Header.Get("X-Forwarded-For")
+	if forwarded != "" {
+		ips := strings.Split(forwarded, ",")
+		if len(ips) >= 1 {
+			return strings.TrimSpace(ips[0])
+		}
+	}
+	return "?"
 }
