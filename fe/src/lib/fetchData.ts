@@ -3,9 +3,8 @@
 import { Data } from "./types";
 import { getApiURL } from "./api";
 
-export async function fetchData(): Promise<Data> {
-	const apiBaseURL = getApiURL("api");
-
+export async function fetchData(festival?: string): Promise<Data> {
+	const apiBaseURL = getApiURL(festival ? `api/lineup/${festival}` : "api");
 	try {
 		console.log("fetch on " + apiBaseURL);
 		const response = await fetch(apiBaseURL);

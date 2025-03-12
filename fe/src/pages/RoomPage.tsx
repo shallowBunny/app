@@ -8,6 +8,7 @@ import clsx from "clsx";
 import { Data, Like } from "../lib/types"; // Import the Like type
 import { extractEmoticons } from "../lib/emoji"; // Import the function
 import Search from "@/components/ui/Search"; // Import the Search component
+import { getVhForAllTabs } from "../lib/utils";
 
 interface RoomPageProps {
 	data: Data;
@@ -18,6 +19,7 @@ interface RoomPageProps {
 	setSelectedRoom: (room: string) => void; // Add setSelectedRoom as a prop
 	likedDJs: Like[]; // Update likedDJs to be a list of Like objects
 	handleLikedDJsChange: (updateFn: (prevLikedDJs: Like[]) => Like[]) => void;
+	printPartyName: boolean;
 }
 
 const RoomPage: FunctionComponent<RoomPageProps> = ({
@@ -29,6 +31,7 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 	setSelectedRoom,
 	likedDJs,
 	handleLikedDJsChange,
+	printPartyName,
 }) => {
 	if (!data || !data.sets) {
 		return (
@@ -43,12 +46,14 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 		.filter((room) => data.sets.some((set) => set.room === room));
 
 	const iconsAreSmall = uniqueRooms.length > 10;
+
 	const youarehere = data.meta.roomYouAreHereEmoticon;
 
-	// Change this to expand the tabs vertically
-	let vhForAllTabs = 79.0;
-	if (isRunningAsWPA) {
-		vhForAllTabs = 90.0;
+	const vhForAllTabs = getVhForAllTabs(isRunningAsWPA, isDesktop);
+
+	let partyName = data.meta.partyName;
+	if (!printPartyName) {
+		partyName = "";
 	}
 
 	const vhByTab = vhForAllTabs / uniqueRooms.length;
@@ -83,7 +88,7 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 									style={{
 										height: `${vhByTab}vh`,
 									}}
-									value={room}
+									value={String(i)}
 								>
 									<span
 										className={clsx(
@@ -107,7 +112,7 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 									{ "rounded-bl-3xl": room != uniqueRooms.slice(-1)[0] }
 								)}
 								style={{ height: `${vhForAllTabs}vh` }}
-								value={room}
+								value={String(i)}
 								key={i}
 							>
 								<div className="absolute top-5">
@@ -118,6 +123,7 @@ const RoomPage: FunctionComponent<RoomPageProps> = ({
 										currentMinute={currentMinute}
 										likedDJs={likedDJs} // Pass likedDJs as a prop
 										isDesktop={isDesktop}
+										partyName={partyName}
 									/>
 									<div className="h-20"></div>
 								</div>

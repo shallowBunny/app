@@ -8,11 +8,12 @@ import {
 import { Data, Like } from "../../lib/types"; // Assuming `Like` is defined in types
 
 import { loadImageAsync } from "../../lib/loadImage";
+import { getVhForAllTabs } from "../../lib/utils";
 
 interface NowProps {
 	data: Data;
 	isRunningAsWPA: boolean;
-	allSetsInPast: boolean;
+	isDesktop: boolean;
 	currentMinute: Date;
 	likedDJs: Like[]; // Modify likedDJs to an array of Like objects
 	handleLikedDJsChange: (updateFn: (prevLikedDJs: Like[]) => Like[]) => void;
@@ -21,7 +22,7 @@ interface NowProps {
 export const Now: FunctionComponent<NowProps> = ({
 	data,
 	isRunningAsWPA,
-	allSetsInPast,
+	isDesktop,
 	likedDJs,
 	handleLikedDJsChange,
 }) => {
@@ -41,7 +42,9 @@ export const Now: FunctionComponent<NowProps> = ({
 		}
 	}, [data.meta.nowMapImage]);
 
-	const vh = isRunningAsWPA ? 89.5 : 78.0;
+	//const vh = isRunningAsWPA ? 89.5 : 78.0;
+	const vh = getVhForAllTabs(isRunningAsWPA, isDesktop) - 1;
+
 	const height = `${vh}vh`; // Subtracting 2.6vh as per your original code
 
 	// toggleLike will call handleLikedDJsChange with a function to update the liked DJs
@@ -72,55 +75,38 @@ export const Now: FunctionComponent<NowProps> = ({
 		});
 	};
 
-	// If the condition is met, render the error message
-	if (allSetsInPast && data.meta.nowTextWhenFinished) {
-		return (
-			<div className="bg-[#222123] fixed inset-0 flex justify-center items-center">
-				<div className="bg-[#2e2c2f] p-8 rounded-lg shadow-lg text-white max-w-lg text-center">
-					<h1 className="text-2xl font-bold mb-4">
-						{data.meta.roomYouAreHereEmoticon}
-					</h1>
-					<p className="text-white text-center text-[18px] w-full p-2">
-						{data.meta.nowTextWhenFinished}
-					</p>
-				</div>
-			</div>
-		);
-	}
-
 	return (
 		<div className="bg-[#222123] rounded-md px-4 pr-2 py-2 text-[22px] leading-7">
 			<ul className="w-full overflow-y-scroll" style={{ height }}>
-				{!allSetsInPast &&
-					roomSituations.map((situation, index) => {
-						const { like } = situation; // Extract the like object
+				{roomSituations.map((situation, index) => {
+					const { like } = situation; // Extract the like object
 
-						return (
-							<li key={index} className="mb-4 flex items-center">
-								<span>{situation.situation}</span>
-								{/* Show heart and make it clickable */}
-								{like && (
-									<span className="ml-2" onClick={() => toggleLike(like)}>
-										<span
-											className="cursor-pointer p-2 -m-1 inline-block"
-											style={{ touchAction: "manipulation" }}
-										>
-											{likedDJs.some(
-												(existingLike) =>
-													existingLike.dj === like.dj &&
-													existingLike.beginningSchedule.getTime() ===
-														like.beginningSchedule.getTime() &&
-													existingLike.room === like.room
-											)
-												? "❤️"
-												: "🤍"}{" "}
-											{/* Show filled or empty heart */}
-										</span>
+					return (
+						<li key={index} className="mb-4 flex items-center">
+							<span>{situation.situation}</span>
+							{/* Show heart and make it clickable */}
+							{like && (
+								<span className="ml-2" onClick={() => toggleLike(like)}>
+									<span
+										className="cursor-pointer p-2 -m-1 inline-block"
+										style={{ touchAction: "manipulation" }}
+									>
+										{likedDJs.some(
+											(existingLike) =>
+												existingLike.dj === like.dj &&
+												existingLike.beginningSchedule.getTime() ===
+													like.beginningSchedule.getTime() &&
+												existingLike.room === like.room
+										)
+											? "❤️"
+											: "🤍"}{" "}
+										{/* Show filled or empty heart */}
 									</span>
-								)}
-							</li>
-						);
-					})}
+								</span>
+							)}
+						</li>
+					);
+				})}
 				<div className="text-[18px]">
 					{!isRunningAsWPA && (
 						<li key="infowpa" className="mb-4">
@@ -136,7 +122,7 @@ export const Now: FunctionComponent<NowProps> = ({
 							</a>
 						</li>
 					)}
-					{!allSetsInPast && data.meta.nowMapImage && mapImageSrc && (
+					{data.meta.nowMapImage && mapImageSrc && (
 						<li key="map-image" className="mb-4 text-[18px]">
 							<img
 								className="relative max-w-[344px] block overflow-hidden rounded-2xl mb-4"
@@ -160,7 +146,7 @@ export const Now: FunctionComponent<NowProps> = ({
 						</li>
 					)}
 
-					{!allSetsInPast && data.meta.nowTextAfterMap && (
+					{data.meta.nowTextAfterMap && (
 						<li key="next-message-little" className="mb-4">
 							{data.meta.nowTextAfterMap}
 						</li>
@@ -179,7 +165,7 @@ export const Now: FunctionComponent<NowProps> = ({
 							🦆
 						</li>
 					)}
-					{!allSetsInPast && data.meta.nowShowDataSourceAd && (
+					{data.meta.nowShowDataSourceAd && (
 						<li key="info2" className="mb-4">
 							🦆 Data source:{" "}
 							<a

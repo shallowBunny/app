@@ -1,5 +1,5 @@
-import { Like } from "./types"; // Adjust the import path as needed
-import { getLikesURL } from "./api"; // Adjust the import path as needed
+import { Like } from "./types";
+import { getApiURL } from "./api";
 
 interface LikesResponse {
 	token: string;
@@ -7,23 +7,7 @@ interface LikesResponse {
 }
 
 export const parseAndMigrateLikedDJs = (parsedLikedDJs: Like[]): Like[] => {
-	//	const parsedLikedDJs = JSON.parse(storedLikedDJs) as Like[];
-
 	const likedDJsWithDates = parsedLikedDJs.map((like) => {
-		// Migrate if `links` exists and `meta` is empty
-		if (like.links && like.links.length > 0 && !like.meta) {
-			const [linkValue] = like.links; // Get the string value from links array
-			if (like.dj !== "?" && linkValue !== "") {
-				like.meta = [
-					{
-						key: `dj.link.sisyfan.${like.dj}`,
-						value: linkValue,
-					},
-				];
-			}
-			console.log("Migrating " + like.meta);
-		}
-
 		return {
 			...like,
 			beginningSchedule: new Date(like.beginningSchedule),
@@ -48,11 +32,8 @@ export const postUpdatedLikes = async (
 	let token = localStorage.getItem("token") || "";
 	const likesResponse = { token, likes: updatedLikedDJs };
 
-	//	console.log("Token: ", token);
-	//	console.log("LikesResponse: ", likesResponse);
-
 	try {
-		const response = await fetch(getLikesURL("likes"), {
+		const response = await fetch(getApiURL("api/likes"), {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -69,10 +50,8 @@ export const postUpdatedLikes = async (
 
 		if (data.token) {
 			localStorage.setItem("token", data.token);
-			console.log("Token received and stored:", data.token);
 		}
 
-		console.log("Received updated likes from server:", likes);
 		return likes;
 	} catch (error) {
 		console.error("Error fetching data:", error);

@@ -3,13 +3,8 @@ export function isLocalhost(): boolean {
 }
 
 export function getApiURL(endpoint: string): string {
+	const localhostPort = endpoint === "api" ? 8082 : 8897;
 	return isLocalhost()
-		? `http://localhost:8082/${endpoint}`
-		: `${window.location.origin}/${endpoint}`;
-}
-
-export function getLikesURL(endpoint: string): string {
-	return isLocalhost()
-		? `http://localhost:8897/${endpoint}`
+		? `http://localhost:${localhostPort}/${endpoint}`
 		: `${window.location.origin}/${endpoint}`;
 }

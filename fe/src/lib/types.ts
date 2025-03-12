@@ -15,6 +15,7 @@ export interface Set {
 
 export interface Meta {
 	aboutBigIcon: string;
+	aboutShowPatreonIcon: boolean;
 	aboutShowShallowBunnyIcon: boolean;
 	aboutShowSisyDuckIcon: boolean;
 	botUrl: string;
@@ -31,6 +32,8 @@ export interface Meta {
 	roomYouAreHereEmoticon: string;
 	title: string;
 	beginningSchedule: Date;
+	partyName: string;
+	partyUrl: string;
 }
 
 export interface Data {
@@ -45,7 +48,6 @@ export interface Like {
 	room: string;
 	started: Date;
 	meta: SetMeta[] | null;
-	links: [string]; // to remove
 }
 export interface RoomSituation {
 	room: string;

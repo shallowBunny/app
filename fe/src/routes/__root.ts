@@ -1,3 +1,5 @@
 import { createRootRoute } from "@tanstack/react-router";
 
-export const Route = createRootRoute();
+export const rootRoute = createRootRoute();
+
+export { rootRoute as Route };

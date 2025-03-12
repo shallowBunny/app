@@ -12,6 +12,7 @@ interface RoomProps {
 	currentMinute: Date;
 	likedDJs: Like[]; // Use an array of Like objects instead of a map
 	isDesktop: boolean;
+	partyName: string;
 }
 
 const mergeMissingDataSets = (sets: Set[]): Set[] => {
@@ -151,7 +152,15 @@ const isSetOngoingNow = (sets: Set[]): boolean => {
 };
 
 const Room = (props: RoomProps) => {
-	const { sets, room, youarehere, currentMinute, likedDJs, isDesktop } = props; // Destructure likedDJs (array)
+	const {
+		sets,
+		room,
+		youarehere,
+		currentMinute,
+		likedDJs,
+		isDesktop,
+		partyName,
+	} = props; // Destructure likedDJs (array)
 
 	const mergedSets = addClosingAndClosedSets(
 		mergeMissingDataSets(sets),
@@ -184,6 +193,7 @@ const Room = (props: RoomProps) => {
 		<>
 			<div>
 				<h2 className="text-[25px]">
+					{partyName && `${partyName} `}
 					{room}
 					{roomTag}
 				</h2>
@@ -203,7 +213,40 @@ const Room = (props: RoomProps) => {
 					return (
 						<div key={day}>
 							<br />
-							<h2 className="text-[20px]">{isToday ? "Today" : day}:</h2>
+							<h2 className="text-[20px]">
+								{isToday
+									? "Today"
+									: (() => {
+											const firstSet = groupedSets[day]?.[0]; // Get the first set for the day
+											if (!firstSet || !firstSet.start) return day; // Fallback if no valid date
+
+											const dayDate = new Date(firstSet.start); // Ensure it's a Date
+											const oneWeekAgo = new Date();
+											oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+											function getOrdinalSuffix(day: number): string {
+												if (day > 3 && day < 21) return "th"; // Covers 4th-20th (special case)
+												switch (day % 10) {
+													case 1:
+														return "st";
+													case 2:
+														return "nd";
+													case 3:
+														return "rd";
+													default:
+														return "th";
+												}
+											}
+
+											return dayDate < oneWeekAgo
+												? `${dayDate.toLocaleDateString("en-US", { weekday: "long" })}, ` +
+														`${dayDate.toLocaleDateString("en-US", { month: "long" })} ` +
+														`${dayDate.getDate()}${getOrdinalSuffix(dayDate.getDate())}`
+												: day;
+										})()}
+								:
+							</h2>
+
 							<ul>
 								{setsForDay.map((set) => {
 									return (

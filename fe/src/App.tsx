@@ -1,3 +1,4 @@
+// App.tsx
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, type createRouter } from "@tanstack/react-router";
 import type { FunctionComponent } from "./lib/types";

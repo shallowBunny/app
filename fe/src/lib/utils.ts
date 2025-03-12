@@ -2,6 +2,15 @@
 import { Set, RoomSets, Meta, Like, RoomSituation } from "./types";
 import clsx from "clsx";
 
+export const getVhForAllTabs = (
+	isRunningAsWPA: boolean,
+	isDesktop: boolean
+): number => {
+	if (isDesktop) return 92.0;
+	if (isRunningAsWPA) return 90.0;
+	return 80.0;
+};
+
 export function findCurrentAndNextSets(
 	sets: Set[],
 	now: Date = getOverriddenCurrentTime()
@@ -151,7 +160,6 @@ export function convertRoomSetsToRoomSituation(
 				room: sets.current.room,
 				started: sets.current.start,
 				meta: sets.current.meta,
-				links: [""], //TODO REMOVE
 			};
 			closed = false; // The room is open if there's a current DJ
 		}

@@ -1,10 +1,10 @@
 import React from "react";
 
-import SoundcloudIcon from "@/assets/icon-soundcloud.png";
-import SpotifyIcon from "@/assets/icon-spotify.png";
-import InstagramIcon from "@/assets/icon-instagram.png";
-import BandcampIcon from "@/assets/icon-bandcamp.png";
-import WWWIcon from "@/assets/icon-www.png";
+import SoundcloudIcon from "@/assets/icon-soundcloud.webp";
+import SpotifyIcon from "@/assets/icon-spotify.webp";
+import InstagramIcon from "@/assets/icon-instagram.webp";
+import BandcampIcon from "@/assets/icon-bandcamp.webp";
+import WWWIcon from "@/assets/icon-www.webp";
 
 export interface SetMeta {
 	key: string;

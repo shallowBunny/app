@@ -29,7 +29,7 @@ const Search: React.FC<SearchProps> = ({
 			}, 300); // Delay to ensure it focuses after the component fully mounts
 		}
 		handleLikedDJsChange(() => {
-			return likedDJs; // Or modify as needed
+			return likedDJs;
 		});
 	}, []);
 

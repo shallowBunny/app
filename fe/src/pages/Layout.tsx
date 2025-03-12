@@ -10,30 +10,109 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "@/components/ui/drawer";
-import BunnyIcon from "@/assets/icon-bunny.png";
-import DuckIcon from "@/assets/icon-duck.png";
-import TelegramIcon from "@/assets/icon-telegram.png";
-import TelegramBotIcon from "@/assets/icon-telegram-bot.png";
-import GithubIcon from "@/assets/icon-github.png";
+import BunnyIcon from "@/assets/icon-bunny.webp";
+import DuckIcon from "@/assets/icon-duck.webp";
+import TelegramIcon from "@/assets/icon-telegram.webp";
+import TelegramBotIcon from "@/assets/icon-telegram-bot.webp";
+import PatreonIcon from "@/assets/icon-patreon.webp";
+
+import GithubIcon from "@/assets/icon-github.webp";
 import { Now } from "@/components/ui/Now";
 import { useQuery } from "@tanstack/react-query";
-import { queryOptions } from "../lib/queryConfig";
+import { getQueryOptions } from "../lib/queryConfig";
 import { Data, Like } from "../lib/types";
-import { allSetsInPastAndFinishedMoreThanXHoursAgo } from "../lib/sets";
 import useCurrentMinute from "../hooks/useCurrentMinute";
 import { loadImageAsync } from "../lib/loadImage";
 import { PacmanLoader } from "react-spinners";
 import { postUpdatedLikes, parseAndMigrateLikedDJs } from "../lib/likesService";
 import { isLocalhost } from "../lib/api";
+import { useRouter } from "@tanstack/react-router";
+import { getVhForAllTabs } from "../lib/utils";
 
 // Lazy load RoomPage
 const RoomPage = lazy(() => import("./RoomPage"));
 
-const Layout: React.FC = () => {
-	const [showRoomPage, setShowRoomPage] = useState(false); // State to toggle between Now and RoomPage
+type LayoutProps = {
+	festival?: string;
+	stage?: string;
+};
+
+//const Layout: React.FC = () => {
+const Layout: React.FC<LayoutProps> = ({ festival, stage }) => {
+	const router = useRouter();
 	const [selectedRoom, setSelectedRoom] = useState<string>(""); // State for selected room
+
+	useEffect(() => {
+		console.log("Layout re-rendered");
+	}, []); // Empty dependency array ensures it runs only on mount
+
+	const getBaseUrl = () => {
+		if (!festival || festival === "now") {
+			return "/";
+		}
+		return `/lineup/${festival}/${selectedRoom}`;
+	};
+
+	//data?.meta?.part
+
+	const [currentPage, setCurrentPage] = useState<"now" | "rooms">(
+		!stage || stage === "now" ? "now" : "rooms"
+	);
+
+	const navigateTo = (page: "now" | "rooms") => {
+		console.log("navigateTo" + page + " " + getBaseUrl());
+		if (page === "now") {
+			festival = undefined;
+			setCurrentPage("now");
+			router.history.replace(`${getBaseUrl()}`); // Navigate dynamically
+		} else {
+			setCurrentPage("rooms");
+			router.history.replace(`${getBaseUrl()}`);
+		}
+	};
+
+	useEffect(() => {
+		if (selectedRoom !== "") {
+			if (festival) {
+				router.history.push(`/lineup/${festival}/${selectedRoom}`);
+			} else {
+				router.history.push("/"); // Navigate to home if no festival
+			}
+			console.log("set router:" + selectedRoom);
+		} else {
+			console.log("skip set router selectedRoom.");
+		}
+	}, [selectedRoom, festival, history]);
+
 	const [imageSrc, setImageSrc] = useState<string | null>(null);
-	const { data, error, isLoading } = useQuery<Data, Error>(queryOptions);
+	const { data, error, isLoading } = useQuery<Data, Error>(
+		getQueryOptions(festival)
+	);
+
+	// Update selectedRoom when stage or data.meta.rooms changes
+	useEffect(() => {
+		// Convert stage to a number if it's a string
+		const stageIndex = stage ? parseInt(stage) : undefined;
+
+		if (data?.meta?.rooms && stageIndex !== undefined && stageIndex >= 0) {
+			if (stageIndex < data.meta.rooms.length) {
+				setSelectedRoom(String(stageIndex)); // Set the selected room based on the converted index
+			} else {
+				setSelectedRoom("0");
+			}
+		} else {
+			if (stage === "search") {
+				setSelectedRoom("search");
+			} else {
+				if (stage === undefined) {
+					setSelectedRoom("0");
+				}
+			}
+		}
+	}, [stage, data?.meta.rooms]); // Reacts to changes in stage or rooms
+
+	const printPartyName = festival ? true : false;
+
 	const [isContentLoaded, setIsContentLoaded] = useState<boolean>(false);
 	const [pageTitle, setPageTitle] = useState("Lineup app"); // State for page title
 	const [appleTouchIcon, setAppleTouchIcon] = useState<string | null>(null); // State for apple-touch-icon
@@ -42,7 +121,6 @@ const Layout: React.FC = () => {
 	const [isRunningAsWPA, setIsRunningAsWPA] = useState<boolean>(false); // State for isRunningAsWPA
 	const [isDesktop, setIsDesktop] = useState<boolean>(false);
 
-	const [areAllSetsInPast, setAreAllSetsInPast] = useState<boolean>(false); // State to track if all sets are in the past
 	const currentMinute = useCurrentMinute(); // Use the custom hook
 	const [showLoadingModal, setShowLoadingModal] = useState(true); // New state for loading modal
 
@@ -113,9 +191,6 @@ const Layout: React.FC = () => {
 				setIsDesktop(true);
 			}
 			setIsRunningAsWPA(standalone);
-
-			console.log("setIsRunningAsWPA:" + standalone);
-			console.log("setIsDesktop:" + isDesktop);
 		};
 
 		checkRunningAsWPA();
@@ -137,6 +212,7 @@ const Layout: React.FC = () => {
 			BunnyIcon,
 			DuckIcon,
 			GithubIcon,
+			PatreonIcon,
 		];
 		const preloadImagePromises = preloadImages.map((src) => {
 			const img = new Image();
@@ -166,25 +242,15 @@ const Layout: React.FC = () => {
 			const mobileWebAppTitle = data.meta.mobileAppName || "Lineup app";
 			setAppleMobileWebAppTitle(mobileWebAppTitle);
 
-			const allSetsPast = !!(
-				allSetsInPastAndFinishedMoreThanXHoursAgo(data.sets, 24 * 2) &&
-				data.meta.nowTextWhenFinished &&
-				data.meta.nowTextWhenFinished.trim().length > 0
-			);
 			const pageTitle = data.meta.title + " lineup";
 			setPageTitle(pageTitle);
-			setAreAllSetsInPast(allSetsPast);
-
-			if (selectedRoom === "" && data?.sets?.length > 0) {
-				const lastSet = data.sets[data.sets.length - 1];
-				if (lastSet) {
-					setSelectedRoom(lastSet.room);
-				}
-			}
 		}
 	}, [data]);
 
-	if (error)
+	if (error) {
+		setTimeout(() => {
+			router.navigate({ to: "/" });
+		}, 1000);
 		return (
 			<div className="bg-[#222123] fixed inset-0 flex justify-center items-center">
 				<div className="bg-[#2e2c2f] p-8 rounded-lg shadow-lg text-white max-w-lg text-center">
@@ -193,6 +259,7 @@ const Layout: React.FC = () => {
 				</div>
 			</div>
 		);
+	}
 
 	if (showLoadingModal) {
 		return (
@@ -209,7 +276,7 @@ const Layout: React.FC = () => {
 			</div>
 		);
 	}
-
+	const vhForAllTabs = getVhForAllTabs(isRunningAsWPA, isDesktop);
 	return (
 		<HelmetProvider>
 			<div className="bg-[#222123] w-screen h-screen flex flex-col justify-center items-center text-slate-100 overflow-hidden relative">
@@ -219,28 +286,28 @@ const Layout: React.FC = () => {
 						<link
 							rel="apple-touch-icon"
 							sizes="180x180"
-							href={`${appleTouchIcon}-180x180.png`}
+							href={`${appleTouchIcon}-180x180.webp`}
 						/>
 					)}
 					{appleTouchIcon && (
 						<link
 							rel="icon"
 							sizes="16x16"
-							href={`${appleTouchIcon}-16x16.png`}
+							href={`${appleTouchIcon}-16x16.webp`}
 						/>
 					)}
 					{appleTouchIcon && (
 						<link
 							rel="icon"
 							sizes="32x32"
-							href={`${appleTouchIcon}-32x32.png`}
+							href={`${appleTouchIcon}-32x32.webp`}
 						/>
 					)}
 					{appleTouchIcon && (
 						<link
 							rel="icon"
 							sizes="96x96"
-							href={`${appleTouchIcon}-96x96.png`}
+							href={`${appleTouchIcon}-96x96.webp`}
 						/>
 					)}
 					<meta
@@ -259,7 +326,7 @@ const Layout: React.FC = () => {
 					}}
 					className="w-full absolute"
 				>
-					{showRoomPage ? (
+					{currentPage === "rooms" ? (
 						<Suspense
 							fallback={<div className="bg-[#222123] fixed inset-0"></div>}
 						>
@@ -272,13 +339,14 @@ const Layout: React.FC = () => {
 								setSelectedRoom={setSelectedRoom} // Pass setSelectedRoom to RoomPage
 								likedDJs={likedDJs} // Pass likedDJs only to RoomPage
 								handleLikedDJsChange={handleLikedDJsChange}
+								printPartyName={printPartyName}
 							/>
 						</Suspense>
 					) : (
 						<Now
 							data={data}
 							isRunningAsWPA={isRunningAsWPA}
-							allSetsInPast={areAllSetsInPast}
+							isDesktop={isDesktop}
 							currentMinute={currentMinute}
 							likedDJs={likedDJs} // Pass likedDJs to Now
 							handleLikedDJsChange={handleLikedDJsChange}
@@ -286,28 +354,25 @@ const Layout: React.FC = () => {
 					)}
 				</div>
 				<div
-					className={`flex mb-1 mt-2 w-full absolute ${isRunningAsWPA ? "top-[90vh]" : "top-[80vh]"}`}
+					className="flex mb-1 mt-2 w-full absolute"
+					style={{ top: `${vhForAllTabs}vh` }}
 				>
 					<Drawer>
 						<div className="flex w-full gap-1 mx-2">
-							{!areAllSetsInPast && (
-								<button
-									className="text-white text-center text-[18px] w-full p-2 rounded-[4px] flex-grow"
-									style={{ background: "#715874" }}
-									onClick={() => setShowRoomPage(false)} // Set to show Now component
-								>
-									Now
-								</button>
-							)}
-							{!areAllSetsInPast && (
-								<button
-									className="text-white text-center text-[18px] w-full p-2 rounded-[4px] flex-grow"
-									style={{ background: "#715874" }}
-									onClick={() => setShowRoomPage(true)} // Set to show RoomPage component
-								>
-									Stages
-								</button>
-							)}
+							<button
+								className="text-white text-center text-[18px] w-full p-2 rounded-[4px] flex-grow"
+								style={{ background: "#715874" }}
+								onClick={() => navigateTo("now")} // Set to show Now component
+							>
+								Now
+							</button>
+							<button
+								className="text-white text-center text-[18px] w-full p-2 rounded-[4px] flex-grow"
+								style={{ background: "#715874" }}
+								onClick={() => navigateTo("rooms")} // Set to show RoomPage component
+							>
+								Stages
+							</button>
 							<DrawerTrigger
 								className="text-white text-center text-[18px] w-full p-2 rounded-[4px] flex-grow"
 								style={{ background: "#715874" }}
@@ -389,6 +454,20 @@ const Layout: React.FC = () => {
 															className="w-full"
 															src={TelegramBotIcon}
 															alt="TelegramBot"
+														/>
+													</a>
+												)}
+												{data.meta.aboutShowPatreonIcon && (
+													<a
+														href="https://www.patreon.com/shallowBunny"
+														target="_blank"
+														className="relative max-w-[64px] block overflow-hidden"
+														title="Patreon"
+													>
+														<img
+															className="w-full"
+															src={PatreonIcon}
+															alt="Patreon"
 														/>
 													</a>
 												)}
