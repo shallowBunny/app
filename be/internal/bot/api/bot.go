@@ -55,6 +55,7 @@ type Icon struct {
 func (b *BotHandler) GetLineUp(c *gin.Context) {
 	var response Response
 	ip := utils.GetClientIPByRequest(c.Request)
+	go b.Bot.StatsUsingUserIp(ip)
 	response.Sets = b.Bot.RootLineUp.Sets
 	response.Meta = b.Bot.GetConfig().Meta
 	response.Meta.Rooms = b.Bot.GetConfig().Lineup.Rooms
@@ -125,6 +126,29 @@ func (b *BotHandler) UpdateLineUp(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Created MR %v with changes", mr.ID),
 	})
+}
+
+func (b *BotHandler) Message(c *gin.Context) {
+	var json struct {
+		AdminMsg string `json:"adminMsg"` // Expecting "adminMsg" in the JSON body
+	}
+
+	// Parse the incoming JSON body
+	if err := c.ShouldBindJSON(&json); err != nil {
+		// If parsing fails, respond with an error
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Get the adminMsg from the parsed JSON
+	adminMsg := json.AdminMsg
+
+	// Send the message to admins using the bot
+	b.Bot.SendAdminsMessage(adminMsg)
+	b.Bot.Log(666, "", adminMsg)
+
+	// Respond back to the client
+	c.JSON(http.StatusOK, gin.H{"status": "Message sent to admins"})
 }
 
 type RestartRequest struct {

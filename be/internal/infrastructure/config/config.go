@@ -16,6 +16,7 @@ import (
 
 type Meta struct {
 	AboutBigIcon              string    `json:"aboutBigIcon" yaml:"aboutBigIcon"`
+	AboutShowPatreonIcon      bool      `json:"aboutShowPatreonIcon" yaml:"aboutShowPatreonIcon"`
 	AboutShowShallowBunnyIcon bool      `json:"aboutShowShallowBunnyIcon" yaml:"aboutShowShallowBunnyIcon"`
 	AboutShowSisyDuckIcon     bool      `json:"aboutShowSisyDuckIcon" yaml:"aboutShowSisyDuckIcon"`
 	BotUrl                    string    `json:"botUrl" yaml:"botUrl"`
@@ -33,6 +34,8 @@ type Meta struct {
 	Title                     string    `json:"title" yaml:"title"`
 	BeginningSchedule         time.Time `json:"beginningSchedule" yaml:"-"`
 	TimeZone                  string    `json:"timeZone" yaml:"timeZone"`
+	PartyName                 string    `json:"partyName" yaml:"partyName"`
+	PartyUrl                  string    `json:"partyUrl" yaml:"partyUrl"`
 }
 
 type Config struct {
@@ -136,18 +139,23 @@ func New(fileName string, isConfigCheck bool) (*Config, error) {
 	c.Meta.NowTextWhenFinished = v.GetString("meta.nowTextWhenFinished")
 	c.Meta.BotUrl = v.GetString("meta.botUrl")
 	c.Meta.AboutBigIcon = v.GetString("meta.aboutBigIcon")
+	c.Meta.AboutShowPatreonIcon = v.GetBool("meta.aboutShowPatreonIcon")
 	c.Meta.AboutShowShallowBunnyIcon = v.GetBool("meta.aboutShowShallowBunnyIcon")
 	c.Meta.AboutShowSisyDuckIcon = v.GetBool("meta.aboutShowSisyDuckIcon")
 	c.Meta.NowMapImage = v.GetString("meta.nowMapImage")
 	c.Meta.RoomYouAreHereEmoticon = v.GetString("meta.roomYouAreHereEmoticon")
+	c.Meta.PartyName = v.GetString("meta.PartyName")
+	c.Meta.PartyUrl = v.GetString("meta.PartyUrl")
+
 	if c.Meta.RoomYouAreHereEmoticon == "" {
-		errorString += "missing meta.roomYouAreHereEmoticon"
+		errorString += "missing meta.roomYouAreHereEmoticon\n"
 	}
 	c.Meta.MobileAppName = v.GetString("meta.mobileAppName")
 	c.Meta.Prefix = v.GetString("meta.prefix")
 	if c.Meta.Prefix == "" {
 		errorString += "missing meta.prefix\n"
 	}
+
 	c.Meta.Title = v.GetString("meta.title")
 	if c.Meta.Title == "" {
 		errorString += "missing meta.title\n"

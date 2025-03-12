@@ -88,3 +88,46 @@ func New(apiToken string, redisclient *redis.Client) *DaoDb {
 func (d DaoDb) GetKey() string {
 	return d.redisKey
 }
+
+func (d DaoDb) SaveHset24Hours(key, ip string) (int64, error) {
+	ctx := context.Background()
+	timestamp := time.Now().Unix()
+
+	// Start a transaction
+	pipeline := d.redisclient.TxPipeline()
+
+	// Add or update the IP timestamp
+	pipeline.HSet(ctx, key, ip, timestamp)
+
+	// Get all IPs and timestamps
+	entries, err := d.redisclient.HGetAll(ctx, key).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	// Remove outdated entries (older than 24 hours)
+	threshold := timestamp - 24*3600
+	for storedIP, storedTimeStr := range entries {
+		storedTime, err := strconv.ParseInt(storedTimeStr, 10, 64)
+		if err != nil {
+			continue // Skip invalid entries
+		}
+		if storedTime < threshold {
+			pipeline.HDel(ctx, key, storedIP)
+		}
+	}
+
+	// Execute pipeline
+	_, err = pipeline.Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	// Get the updated count of elements
+	count, err := d.redisclient.HLen(ctx, key).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

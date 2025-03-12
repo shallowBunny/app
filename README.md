@@ -1,6 +1,6 @@
 # shallowBunny
 
-shallowBunny is a lineup app for festivals, that can work offline.
+shallowBunny is a lineup app for music festivals, that can work offline.
 
 ## code
 

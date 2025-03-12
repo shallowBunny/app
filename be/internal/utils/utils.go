@@ -38,3 +38,8 @@ func GetClientIPByRequest(req *http.Request) (ip string) {
 	}
 	return "?"
 }
+
+func SkipLinks(text string) string {
+	text = strings.ReplaceAll(text, ".", "\u200B.")
+	return text
+}

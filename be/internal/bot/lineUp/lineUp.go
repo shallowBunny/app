@@ -10,6 +10,7 @@ import (
 
 	"github.com/shallowBunny/app/be/internal/bot/lineUp/inputs"
 	"github.com/shallowBunny/app/be/internal/infrastructure/config"
+	"github.com/shallowBunny/app/be/internal/utils"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
 
 	"github.com/ijt/go-anytime"
@@ -99,7 +100,7 @@ func New(config *config.Config) *LineUp {
 		for _, s := range sets {
 			msg := lineUp.AddSet(lineUp.NewSet(s.Dj, room, s.Day, s.Hour, s.Minute, s.Duration, s.Meta))
 			if msg != "" {
-				log.Error().Msg(msg)
+				log.Debug().Msg(msg)
 			}
 		}
 	}
@@ -553,7 +554,7 @@ func (l LineUp) printRoom(sets []Set, oldData bool, oldLineupMessage string, cur
 			log.Trace().Msgf("you are here B x %v %v", lastPrintedCurrentDay, set.Start)
 		}
 
-		res += printTime(set.Start) + " " + set.Dj
+		res += printTime(set.Start) + " " + utils.SkipLinks(set.Dj)
 		if filterNomSalle == "" {
 			res += " " + set.Room
 		}
@@ -871,7 +872,7 @@ func (l LineUp) PrintCurrentForTime(when *string) string {
 		}
 
 		if (v.Start.Before(current) || v.Start.Equal(current)) && v.End.After(current) {
-			res += room + " " + openedFloor + " " + v.Dj
+			res += room + " " + openedFloor + " " + utils.SkipLinks(v.Dj)
 			if v.Dj != UnknownDJ {
 				nbDjs++
 			}
@@ -887,7 +888,7 @@ func (l LineUp) PrintCurrentForTime(when *string) string {
 				if dj == UnknownDJ {
 					res += " until"
 				} else {
-					res += " (" + dj
+					res += " (" + utils.SkipLinks(dj)
 				}
 
 				if dj != UnknownDJ {
@@ -911,10 +912,10 @@ func (l LineUp) PrintCurrentForTime(when *string) string {
 					if pauseTime == nil || *pauseTime > time.Hour*2 {
 						res += " (closing at " + printTime(currentClosingTime) + ")"
 					} else {
-						res += fmt.Sprintf(" (%v at %v after %vmin pause)", v.Dj, printTime(v.Start), pauseTime.Minutes())
+						res += fmt.Sprintf(" (%v at %v after %vmin pause)", utils.SkipLinks(v.Dj), printTime(v.Start), pauseTime.Minutes())
 					}
 				} else {
-					res += " (" + v.Dj + " at " + printTime(v.Start) + ")"
+					res += " (" + utils.SkipLinks(v.Dj) + " at " + printTime(v.Start) + ")"
 				}
 				nextFound = true
 				continue

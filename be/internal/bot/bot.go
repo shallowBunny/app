@@ -92,6 +92,13 @@ func (b Bot) GetMessageChannel() chan Message {
 	return b.channel
 }
 
+func (b Bot) StatsUsingUserIp(ip string) {
+	i, err := b.dao.SaveHset24Hours("stats-api-"+b.config.Meta.Prefix, ip)
+	if err != nil {
+		log.Info().Msgf("SaveHset24Hours: %v %v %v\n", ip, i, err)
+	}
+}
+
 func (b Bot) IsAdmin(user int64) bool {
 	for _, v := range b.admins {
 		if v == int(user) {
@@ -210,7 +217,7 @@ func New(dao dao.Dao, config *config.Config) *Bot {
 	}
 
 	bot.dao = dao
-	bot.users = users.New(dao, config.Lineup.BeginningSchedule)
+	bot.users = users.New(dao, config.Meta.Prefix, config.Lineup.BeginningSchedule)
 	bot.commandsHistoryLogFile = f
 	bot.config = config
 	bot.channel = make(chan Message)
@@ -266,7 +273,11 @@ func (b *Bot) Log(user int64, command, userString string) {
 	}
 
 	if !b.IsAdmin(user) {
-		logString := time.Now().Format("Mon 15:04") + " " + userString + " <" + command + ">\n"
+		logString := time.Now().Format("Mon 15:04") + " " + userString
+		if command != "" {
+			logString += " <" + command + ">"
+		}
+		logString += "\n"
 		if user != 0 {
 			b.logs = Trim(b.logs + logString)
 			err := b.dao.SaveLogs(b.logs)

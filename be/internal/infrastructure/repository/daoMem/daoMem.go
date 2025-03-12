@@ -49,3 +49,7 @@ func New() *DaoMem {
 func (d DaoMem) GetKey() string {
 	return "memory"
 }
+
+func (d DaoMem) SaveHset24Hours(key, ip string) (int64, error) {
+	return 0, nil
+}

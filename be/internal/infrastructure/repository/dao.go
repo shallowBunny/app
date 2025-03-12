@@ -12,4 +12,5 @@ type Dao interface {
 	SaveBot(startTime time.Time, bot string) error
 	GetBot(startTime time.Time) (string, error)
 	DeleteBot(startTime time.Time) error
+	SaveHset24Hours(key string, ip string) (int64, error)
 }

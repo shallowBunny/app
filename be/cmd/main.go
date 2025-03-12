@@ -49,6 +49,7 @@ func createServer(b *bot.Bot) *http.Server {
 	r.GET("/api", botHandler.GetLineUp)
 	r.POST("/api", botHandler.TokenAuthMiddleware(), botHandler.Restart)
 	r.PUT("/api", botHandler.TokenAuthMiddleware(), botHandler.UpdateLineUp)
+	r.POST("/message", botHandler.TokenAuthMiddleware(), botHandler.Message)
 
 	manifestHandler := api.NewManifestHandler(b.GetConfig())
 	r.GET("/manifest", manifestHandler.GetManifest)

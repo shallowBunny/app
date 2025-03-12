@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -24,9 +25,10 @@ type Users struct {
 	usersInfo map[int64]*UserInfo
 	dao       dao.Dao
 	startTime time.Time
+	prefix    string
 }
 
-func New(dao dao.Dao, startTime time.Time) Users {
+func New(dao dao.Dao, prefix string, startTime time.Time) Users {
 	usersInfo := make(map[int64]*UserInfo)
 	usersString, err := dao.Get("users", startTime)
 	if err != nil {
@@ -45,6 +47,7 @@ func New(dao dao.Dao, startTime time.Time) Users {
 		usersInfo: usersInfo,
 		dao:       dao,
 		startTime: startTime,
+		prefix:    prefix,
 	}
 	return res
 }
@@ -157,7 +160,17 @@ func (u *Users) UpdateMagicButtons(userId int64, room int, nbRooms int) error {
 	return u.SaveUsers()
 }
 
+func (u *Users) StatsUsingTelegramId(userId int64) {
+	i, err := u.dao.SaveHset24Hours("stats-telegram-users-"+u.prefix, strconv.FormatInt(userId, 10))
+	if err != nil {
+		log.Info().Msgf("SaveHset24Hours: %v %v %v\n", userId, i, err)
+	}
+}
+
 func (u *Users) DoesUserExists(userId int64) bool {
+
+	go u.StatsUsingTelegramId(userId)
+
 	_, ok := u.usersInfo[userId]
 	if ok {
 		if u.usersInfo[userId].Deleted {
